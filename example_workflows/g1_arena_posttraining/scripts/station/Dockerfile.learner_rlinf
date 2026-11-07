@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# The learner image plus the RLinf runtime (runtime=rlinf): rlinf 0.3.0 and the scheduler
+# deps it lacks land under /opt/rlpt_runtime/pydeps, never in the interpreter's
+# site-packages, so the native learner image and its content tag stay untouched. ray 2.58.0,
+# the runtime adapter's pin, already ships with Isaac Sim.
+#
+# station_train.sh builds this on top of the learner image when RUNTIME=rlinf, with the
+# Isaac Lab workflow's scripts directory (which holds the installer) as the build context:
+#   docker build --build-arg BASE_IMAGE=g1_factory_learner:<tag> -t g1_factory_learner_rlinf:<tag> \
+#     -f example_workflows/g1_arena_posttraining/scripts/station/Dockerfile.learner_rlinf \
+#     example_workflows/isaaclab_gr00t_posttraining/scripts
+#
+# The installer drops rlinf's own requirement list on purpose: it pins wandb below what the
+# image ships and pulls in training stacks the runtime adapter never imports. What remains is
+# resolved against the image and installed without dependencies.
+ARG BASE_IMAGE=g1_factory_learner:latest
+FROM ${BASE_IMAGE}
+
+USER root
+# run_container_train.sh puts this directory on the learner's PYTHONPATH (and its bin/ on PATH,
+# for the raylet bootstrap) when RUNTIME=rlinf; the simulators never see it.
+ENV RLPT_RUNTIME_DEPS=/opt/rlpt_runtime/pydeps
+COPY setup_runtime.sh /opt/rlpt_runtime/setup_runtime.sh
+RUN WORK=/opt/rlpt_runtime DEPS_DIR="$RLPT_RUNTIME_DEPS" PYTHON=/isaac-sim/python.sh \
+      bash /opt/rlpt_runtime/setup_runtime.sh && \
+    PYTHONPATH="$RLPT_RUNTIME_DEPS" /isaac-sim/python.sh -c "\
+from importlib.metadata import version; import ray, rlinf.scheduler; \
+assert version('rlinf') == '0.3.0', version('rlinf'); assert ray.__version__ == '2.58.0', ray.__version__; \
+print('rlinf runtime OK — rlinf', version('rlinf'), 'ray', ray.__version__)"

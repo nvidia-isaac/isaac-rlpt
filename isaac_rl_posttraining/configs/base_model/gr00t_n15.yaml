@@ -1,0 +1,27 @@
+# GR00T N1.5 base model: a self-describing N1.5 checkpoint (config.json model_type
+# gr00t_n1_5) plus the data config it was fine-tuned with.
+#
+# Steering (DSRL, RFS, SAC-edit) builds the same frozen GR00T base model as
+# `base_model=gr00t`. PPO selects the N1.5 flow-SDE adapter
+# (policies/gr00t/flow_sde.py) by this name. SFT and IQL train N1.7 and pi0
+# and have no N1.5 demonstration source.
+
+defaults:
+  - base_base_model
+  - _self_
+
+name: gr00t_n15
+ckpt: null               # REQUIRED: N1.5 checkpoint dir (HF layout) or model id
+backbone_model_name_or_path: null
+bc_ckpt: null
+dataset_dir: null        # N1.5 checkpoints bake their statistics; leave the dataset fields null
+multitask_dirs: null
+task_dir: null
+embodiment_tag: null     # REQUIRED: the tag the checkpoint's statistics are stored under
+dataset_adapter: none
+task_instruction: null
+data_config: null        # REQUIRED: gr00t DATA_CONFIG_MAP key or "module:Class" data config
+denoising_steps: null    # flow denoising steps; PPO requires it (one of them is the stochastic step)
+server_url: null
+action_horizon: null     # PPO requires it: the checkpoint's action window (executed steps per decision)
+action_dim: null

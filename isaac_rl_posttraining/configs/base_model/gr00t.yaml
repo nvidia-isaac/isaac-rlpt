@@ -1,0 +1,32 @@
+# GR00T N1.7 base model (the default and the validated reference).
+#
+# The action horizon and width come from the checkpoint.
+#
+# Statistics source (see SteeredGr00tWrapper): multitask_dirs, else
+# dataset_dir, else the checkpoint's baked processor config for
+# embodiment_tag (released task checkpoints such as GR00T-N1.7-LIBERO are
+# self-describing -- leave both dataset fields null and set the tag).
+#
+# GR00T N1.5 checkpoints (config.json model_type gr00t_n1_5) are detected
+# automatically and are always self-describing: set data_config (required)
+# and optionally denoising_steps; leave the dataset fields null.
+
+defaults:
+  - base_base_model
+  - _self_
+
+name: gr00t
+ckpt: null               # REQUIRED: GR00T checkpoint dir (HF layout)
+backbone_model_name_or_path: null  # optional local/HF override for the checkpoint's VLM backbone
+bc_ckpt: null            # optional task-BC checkpoint loaded on top of the base
+dataset_dir: null        # single-task LeRobot dataset dir (modality + stats)
+multitask_dirs: null     # multi-task base: parent dir (or list) of the task datasets
+task_dir: null           # multi-task base: dataset dir of the steered task (language)
+embodiment_tag: null     # null = the wrapper default; set for baked checkpoints
+dataset_adapter: g1_wbc  # dataset->buffer array/modality adapter ('g1_wbc' or 'none')
+task_instruction: null   # explicit language override (rarely needed)
+data_config: null        # N1.5 only (required there): gr00t DATA_CONFIG_MAP key or "module:Class" data config
+denoising_steps: null    # N1.5 only: flow denoising steps; null = the checkpoint's value
+server_url: null
+action_horizon: null
+action_dim: null

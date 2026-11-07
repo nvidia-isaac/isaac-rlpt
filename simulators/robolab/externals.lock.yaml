@@ -1,0 +1,44 @@
+# This repository owns the integration code and the reproduction protocol.
+# These external checkouts are installed outside the repository on each host.
+# Update a revision only in a dedicated baseline-protocol change.
+robolab:
+  repository: https://github.com/NVLabs/RoboLab.git
+  revision: 92313e06dd90d2eeedf48da567755e0b1a8e32d1
+  python: "3.11"
+  simulator_extra: isaac51
+  isaac_sim: "5.1.0"
+  isaac_lab: "2.3.2.post1"
+  required_nvidia_driver_major: 580
+  banana_benchmark_smoke_lfs_assets:
+    - assets/scenes/bagel_plate_banana_bowl.usda
+    - assets/scenes/banana_bowl.usda
+    - assets/fixtures/franka_table.usd
+    - assets/fixtures/table_oak.usd
+    - assets/fixtures/Props/instaceable_meshes.usd
+    - assets/objects/objaverse/bagel_00.usd
+    - assets/objects/objaverse/bagel_06.usd
+    - assets/objects/vomp/plate_large/plate_large.usd
+    - assets/objects/ycb/banana.usd
+    - assets/objects/ycb/bowl.usd
+    - assets/materials/Base/Wood/Oak/Oak_N.png
+    - assets/materials/Base/Wood/Oak/Oak_BaseColor.png
+    - assets/materials/Base/Wood/Oak/Oak_ORM.png
+    - assets/materials/2023_1/vMaterials_2/Paint/Carpaint/textures/smudges_scratches_A_rough.jpg
+    - assets/materials/Base/Metals/RustedMetal/RustedMetal_ORM.png
+    - assets/materials/Base/Metals/RustedMetal/RustedMetal_BaseColor.png
+    - assets/materials/Base/Metals/RustedMetal/RustedMetal_N.png
+    - assets/backgrounds/default/home_office.exr
+    - assets/objects/objaverse/textures/bagel_00.png
+    - assets/objects/objaverse/textures/bagel_06.png
+    - assets/objects/vomp/plate_large/textures/Plates_Large_BaseColor.png
+    - assets/objects/vomp/plate_large/textures/Plates_Large_Metallic.png
+    - assets/objects/vomp/plate_large/textures/Plates_Large_Normal.png
+    - assets/objects/vomp/plate_large/textures/Plates_Large_Roughness.png
+    - assets/objects/ycb/textures/obj_000010.png
+    - assets/objects/ycb/textures/obj_000013.png
+    - assets/robots/franka_robotiq_2f_85_flattened.usd
+isaac_gr00t:
+  repository: https://github.com/NVIDIA/Isaac-GR00T.git
+  revision: 9c7e746b2cd37a810070a98ef41d290a07e806c2
+  model: nvidia/GR00T-N1.7-DROID
+  embodiment_tag: OXE_DROID_RELATIVE_EEF_RELATIVE_JOINT

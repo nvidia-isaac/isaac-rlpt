@@ -1,0 +1,9 @@
+# V2D Vega/Sharpa joint-policy integration. Task behavior and artifact pins
+# live in example_workflows/v2d_box_lift_posttraining.
+provider: v2d
+tasks:
+  - tissue_box_lift_hold
+max_episode_steps:
+  tissue_box_lift_hold: 550
+action_dim: 58
+image_resolution: 0

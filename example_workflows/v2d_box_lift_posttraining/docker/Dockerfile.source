@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+FROM debian:bookworm-slim AS checkout
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git git-lfs \
+    && rm -rf /var/lib/apt/lists/*
+ARG V2D_REVISION
+RUN test -n "$V2D_REVISION" && git init /source \
+    && git -C /source remote add origin https://github.com/nvidia-isaac/video_to_data.git \
+    && git -C /source fetch --depth 1 origin "$V2D_REVISION" \
+    && GIT_LFS_SKIP_SMUDGE=1 git -C /source checkout --detach FETCH_HEAD \
+    && git -C /source lfs install --local \
+    && git -C /source lfs pull --include='robotic_grounding/**' \
+    && test "$(git -C /source rev-parse HEAD)" = "$V2D_REVISION"
+
+# Exported as files (--output type=local); it never runs as a container.
+FROM scratch
+COPY --from=checkout /source/ /
+USER 65534:65534

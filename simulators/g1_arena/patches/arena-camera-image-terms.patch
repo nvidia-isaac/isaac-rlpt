@@ -1,0 +1,13 @@
+diff --git a/isaaclab_arena/utils/cameras.py b/isaaclab_arena/utils/cameras.py
+index 8cde3b50e..2dfed6ddc 100644
+--- a/isaaclab_arena/utils/cameras.py
++++ b/isaaclab_arena/utils/cameras.py
+@@ -106,7 +106,7 @@ def make_camera_observation_cfg(
+         for dt in dtypes:
+             field_name = f"{name}_{dt}"
+             term = ObsTerm(
+-                func=mdp.image,
++                func=next(t for t in (mdp.image_rgb, mdp.image_depth, mdp.image_normals, mdp.image_segmentation) if t._accepts(dt)),
+                 params={"sensor_cfg": SceneEntityCfg(name), "data_type": dt, "normalize": normalize},
+             )
+             # Field name on ObservationsCfg: use the camera name (or add suffix if you like)

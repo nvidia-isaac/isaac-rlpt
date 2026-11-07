@@ -1,0 +1,59 @@
+{
+  "workflow": "libero_posttraining",
+  "evaluator": "LIBERO-90 `put the cream cheese box in the tray` under the frozen pi0 policy, MuJoCo, stochastic steering actor, success when the task's success condition fires within the episode step cap. The frozen policy is scored in the same session as the runs. Peak is the best evaluation of a run and final is its last; each row is one training run",
+  "date": "2026-09-21",
+  "rows": [
+    {
+      "task": "cream cheese into tray",
+      "method": "DSRL",
+      "base": {
+        "successes": 29,
+        "episodes": 100
+      },
+      "note": "",
+      "peak": {
+        "successes": 22,
+        "episodes": 50
+      },
+      "final": {
+        "successes": 22,
+        "episodes": 50
+      }
+    },
+    {
+      "task": "cream cheese into tray",
+      "method": "RFS",
+      "base": {
+        "successes": 29,
+        "episodes": 100
+      },
+      "note": "",
+      "peak": {
+        "successes": 41,
+        "episodes": 50
+      },
+      "final": {
+        "successes": 7,
+        "episodes": 50
+      }
+    },
+    {
+      "task": "both moka pots on stove",
+      "method": "DSRL-PPO",
+      "base": {
+        "successes": 46,
+        "episodes": 64
+      },
+      "peak": {
+        "successes": 52,
+        "episodes": 64
+      },
+      "final": {
+        "successes": 51,
+        "episodes": 64
+      },
+      "note": "LIBERO-10 task 8 under the frozen GR00T N1.7 policy, `runtime=rlinf`, one seed, 20 iterations; peak re-scored from iteration 15, final from iteration 20, on the same 64 seeded episodes",
+      "date": "2026-09-12"
+    }
+  ]
+}

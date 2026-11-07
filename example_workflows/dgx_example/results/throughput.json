@@ -1,0 +1,380 @@
+{
+  "workflow": "dgx_example",
+  "date": "2026-09-18",
+  "runtime": "the runtime layer's episode-synchronous batched worker (every environment plays one episode per iteration; finished environments wait), whole-batch decode",
+  "recipe": {
+    "task": "DrillLift",
+    "env_steps_per_env": 1350,
+    "min_env_steps": 6400,
+    "action_exec_len": 8,
+    "max_updates_per_burst": 20,
+    "sac_batch_size": 64,
+    "image_shortest_edge": 256,
+    "decode_whole_batch": true,
+    "evaluation": false
+  },
+  "gpus": {
+    "gb300": {
+      "label": "GB300",
+      "host": "GB300 DGX Station with one GB300 (Grace CPU, generic kernel)"
+    },
+    "l40": {
+      "label": "L40 (48 GB)",
+      "host": "x86 cluster node, 15 CPUs per GPU"
+    },
+    "rtx5880": {
+      "label": "RTX 5880 Ada (48 GB)",
+      "host": "x86 workstation (Core i9-14900K)"
+    }
+  },
+  "layouts": {
+    "gb300_only": {
+      "label": "GB300 GPU only",
+      "shape": "single",
+      "simulator_gpu": "gb300",
+      "learner_gpu": "gb300",
+      "color": "#0074DF",
+      "rollout_runtime": "native",
+      "schedule": "sync",
+      "simulator_servers": 1
+    },
+    "l40_only": {
+      "label": "L40 only",
+      "shape": "single",
+      "simulator_gpu": "l40",
+      "learner_gpu": "l40",
+      "color": "#7A7A7A",
+      "rollout_runtime": "native",
+      "schedule": "sync",
+      "simulator_servers": 1
+    },
+    "gb300_only_rlinf": {
+      "label": "GB300 GPU only, RLinf runtime",
+      "shape": "single",
+      "simulator_gpu": "gb300",
+      "learner_gpu": "gb300",
+      "color": "#3FA0FF",
+      "rollout_runtime": "rlinf",
+      "schedule": "sync",
+      "simulator_servers": 1
+    },
+    "rtx5880_only": {
+      "label": "RTX 5880 only",
+      "shape": "single",
+      "simulator_gpu": "rtx5880",
+      "learner_gpu": "rtx5880",
+      "color": "#952FC6",
+      "rollout_runtime": "native",
+      "schedule": "sync",
+      "simulator_servers": 1
+    }
+  },
+  "rows": [
+    {
+      "simulator": "arena",
+      "layout": "gb300_only",
+      "num_envs": 8,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 28.6,
+        "std": 1.4,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 18.6,
+        "simulator": null
+      },
+      "wandb_run": "iplrr031",
+      "note": "predates the decode override; N = 8 is under the entry's cap of 16, so it decodes in one forward either way",
+      "env_step_s": 0.194,
+      "decode_s": 0.337,
+      "sac_update_s": 2.649,
+      "wire_ms": 5.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "gb300_only",
+      "num_envs": 64,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 91.3,
+        "std": 1.1,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 27.7,
+        "simulator": null
+      },
+      "wandb_run": "u5my0n0h",
+      "note": "",
+      "env_step_s": 0.499,
+      "decode_s": 0.901,
+      "sac_update_s": 2.796,
+      "wire_ms": 12.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "gb300_only",
+      "num_envs": 128,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 106.2,
+        "std": 0.8,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 37.6,
+        "simulator": null
+      },
+      "wandb_run": "k7q7jgrj",
+      "note": "",
+      "env_step_s": 0.869,
+      "decode_s": 1.545,
+      "sac_update_s": 2.92,
+      "wire_ms": 18.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "gb300_only",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 112.3,
+        "std": 0.4,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 54.7,
+        "simulator": null
+      },
+      "wandb_run": "vhadha61",
+      "note": "",
+      "env_step_s": 1.585,
+      "decode_s": 2.9,
+      "sac_update_s": 2.87,
+      "wire_ms": 38.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "l40_only",
+      "num_envs": 8,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 52.5,
+        "std": 2.6,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": null,
+        "simulator": null
+      },
+      "wandb_run": "kcjc305n",
+      "note": "15 CPUs per GPU",
+      "env_step_s": 0.091,
+      "decode_s": 0.209,
+      "sac_update_s": 0.894,
+      "wire_ms": null
+    },
+    {
+      "simulator": "arena",
+      "layout": "l40_only",
+      "num_envs": 64,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 139.2,
+        "std": 1.8,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": null,
+        "simulator": null
+      },
+      "wandb_run": "l9jgh87r",
+      "note": "15 CPUs per GPU",
+      "env_step_s": 0.217,
+      "decode_s": 1.271,
+      "sac_update_s": 0.89,
+      "wire_ms": null
+    },
+    {
+      "simulator": "arena",
+      "layout": "l40_only",
+      "num_envs": 128,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 126.5,
+        "std": 1.6,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": null,
+        "simulator": null
+      },
+      "wandb_run": "v0kn9wru",
+      "note": "15 CPUs per GPU",
+      "env_step_s": 0.489,
+      "decode_s": 2.526,
+      "sac_update_s": 0.952,
+      "wire_ms": null
+    },
+    {
+      "simulator": "arena",
+      "layout": "gb300_only_rlinf",
+      "num_envs": 8,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 32.9,
+        "std": 0.3,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 26.1,
+        "simulator": null
+      },
+      "wandb_run": "2j6e1tqk",
+      "note": "the GB300-only station, the rollout worker as an RLinf-placed Ray actor on the learner's card; same probe as the native row",
+      "env_step_s": 0.172,
+      "decode_s": 0.319,
+      "sac_update_s": 2.132,
+      "wire_ms": 3.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "gb300_only_rlinf",
+      "num_envs": 64,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 93.5,
+        "std": 1.5,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 34.5,
+        "simulator": null
+      },
+      "wandb_run": "1datiejq",
+      "note": "the GB300-only station, the rollout worker as an RLinf-placed Ray actor on the learner's card; same probe as the native row",
+      "env_step_s": 0.476,
+      "decode_s": 0.871,
+      "sac_update_s": 2.184,
+      "wire_ms": 10.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "gb300_only_rlinf",
+      "num_envs": 128,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 107.5,
+        "std": 2.3,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 43.4,
+        "simulator": null
+      },
+      "wandb_run": "aifv8lx1",
+      "note": "the GB300-only station, the rollout worker as an RLinf-placed Ray actor on the learner's card; same probe as the native row",
+      "env_step_s": 0.844,
+      "decode_s": 1.475,
+      "sac_update_s": 2.162,
+      "wire_ms": 14.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "gb300_only_rlinf",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 112.6,
+        "std": 0.4,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 60.0,
+        "simulator": null
+      },
+      "wandb_run": "w9zjaxlh",
+      "note": "the GB300-only station, the rollout worker as an RLinf-placed Ray actor on the learner's card; same probe as the native row",
+      "env_step_s": 1.563,
+      "decode_s": 2.795,
+      "sac_update_s": 2.217,
+      "wire_ms": 35.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "rtx5880_only",
+      "num_envs": 8,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 51.3,
+        "std": 3.0,
+        "cycles": 100
+      },
+      "env_step_s": 0.118,
+      "decode_s": 0.369,
+      "sac_update_s": 0.47,
+      "peak_gib": {
+        "learner": null,
+        "simulator": null
+      },
+      "wire_ms": null,
+      "wandb_run": "uqs9e2wb",
+      "note": ""
+    },
+    {
+      "simulator": "arena",
+      "layout": "rtx5880_only",
+      "num_envs": 64,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 145.4,
+        "std": 7.8,
+        "cycles": 50
+      },
+      "env_step_s": 0.325,
+      "decode_s": 1.043,
+      "sac_update_s": 0.49,
+      "peak_gib": {
+        "learner": null,
+        "simulator": null
+      },
+      "wire_ms": null,
+      "wandb_run": "qn2mfzal",
+      "note": ""
+    },
+    {
+      "simulator": "arena",
+      "layout": "rtx5880_only",
+      "num_envs": 128,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 150.8,
+        "std": 4.8,
+        "cycles": 50
+      },
+      "env_step_s": 0.596,
+      "decode_s": 2.168,
+      "sac_update_s": 0.49,
+      "peak_gib": {
+        "learner": null,
+        "simulator": null
+      },
+      "wire_ms": null,
+      "wandb_run": "s93lqkdh",
+      "note": ""
+    },
+    {
+      "simulator": "arena",
+      "layout": "rtx5880_only",
+      "num_envs": 256,
+      "status": "out_of_memory",
+      "peak_gib": {
+        "learner": null,
+        "simulator": null
+      },
+      "wandb_run": null,
+      "note": "the whole stack needs about 52 GiB at N = 256; the 48 GB card fills"
+    }
+  ]
+}

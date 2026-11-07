@@ -1,0 +1,207 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "isaac-rl-posttraining"
+version = "0.1.0"
+description = "RL post-training for robot foundation policies (DSRL and beyond) on Isaac simulation environments"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+authors = [{ name = "NVIDIA CORPORATION & AFFILIATES" }]
+
+# External dependencies installed separately (not on PyPI):
+#   - gr00t: GR00T model stack, https://github.com/NVIDIA/Isaac-GR00T
+#   - groot: DreamZero model stack, https://github.com/dreamzero0/dreamzero
+#     (install with --no-deps plus the "dreamzero-local" extra;
+#     see docs/base_models.md)
+#   - IsaacLab-Arena: simulation environments for rollouts and evaluation
+#     (local checkout with its Isaac Sim / IsaacLab stack)
+dependencies = [
+    "torch",
+    "numpy",
+    "gymnasium>=1.0",
+    "hydra-core",
+    "omegaconf",
+    "PyYAML",
+    "loguru",
+    "wandb",
+    "opencv-python-headless",
+    "tqdm",
+    "Pillow",
+    "pandas",
+    "pyarrow",           # pandas needs an engine for the LeRobot episode parquet
+    "decord",            # dataset video decoding for offline replay buffers
+    "peft",
+    # Qwen3-VL backbone for GR00T N1.7 requires transformers>=4.57.3.
+    # Beware version shadowing: another package (or a stale editable
+    # install) earlier on sys.path can silently provide an older
+    # transformers and break model loading — verify
+    # transformers.__version__ at runtime if models fail to load.
+    "transformers>=4.57.3,<5",  # 5.x makes PretrainedConfig a dataclass, breaking gr00t's config subclass
+]
+
+[project.optional-dependencies]
+# PyTorch build selection. A plain `uv sync` (or `--extra cuda`) takes torch from PyPI,
+# whose Linux wheels bundle CUDA; `uv sync --extra cpu` takes torch and torchvision from
+# the pytorch-cpu index instead (CI runners, machines without a GPU). The indexes are
+# declared under [tool.uv.sources]; the two extras are mutually exclusive.
+cuda = ["torch", "torchvision"]
+cpu = ["torch", "torchvision"]
+# Test, lint and type tooling, plus the small optional packages whose tests would
+# otherwise skip (pyzmq/msgpack for the ZeroMQ transport, websockets/msgpack for the
+# served DreamZero client, matplotlib for the dgx_example figures). `uv sync` installs
+# this set through the dev group below; pip users get it with `pip install -e ".[test]"`.
+test = [
+    "pytest",
+    "pytest-timeout",
+    "ruff==0.16.8",
+    "mypy==2.3.1",
+    "msgpack",
+    "msgpack-numpy",
+    "pyzmq",
+    "websockets",
+    "matplotlib",
+]
+# The documentation site (docs/): Sphinx renders the repository's markdown through
+# MyST, so the pages stay readable in a repository preview. The theme is NVIDIA's;
+# copy buttons, cards and tab sets, and mermaid diagrams are the rest. `make -C docs
+# html` needs nothing else, and needs no GPU: docs/conf.py mocks the heavy imports.
+docs = [
+    "sphinx",
+    "myst-parser",
+    "nvidia-sphinx-theme",
+    "sphinx-copybutton",
+    "sphinx-design",
+    "sphinxcontrib-mermaid",
+]
+# DreamZero served base model (base_model=dreamzero_server): WebSocket client for a
+# served world-action model (the model stack stays server-side).
+dreamzero = ["websockets", "msgpack"]
+# DreamZero in-process base model (base_model=dreamzero_local): the third-party imports of
+# the groot inference path (WAN DiT + umt5 text encoder + VAE + transforms).
+# The groot package itself installs from the DreamZero checkout with
+# --no-deps --ignore-requires-python (its own pyproject pins an incompatible
+# full training stack: torch==2.8.0, tensorrt, ray, ...). peft and decord are
+# already base dependencies.
+dreamzero-local = [
+    "einops",
+    "dm-tree",
+    "albumentations",
+    "ftfy",
+    "diffusers",
+    "accelerate",
+    "torchvision",
+    "pydantic",
+    "safetensors",
+]
+# ZeroMQ environment transport (envs/zmq_transport.py): ipc:// and
+# zmq+tcp:// endpoints with msgpack(+numpy) frames.
+zmq = ["pyzmq", "msgpack", "msgpack-numpy"]
+# RLInf rollout runtime (compat/rlinf/ adapters and runtimes/rlinf/). Pinned exactly
+# because RLInf is pre-1.0 and its scheduler API changes between releases (validated
+# against tag v0.3, commit 0505431899574619da86f551bad70b71e0ea2177). Ray clients must
+# match the cluster's Ray version exactly. Install in a dedicated environment.
+rlinf = ["rlinf==0.3.0", "ray[default]==2.58.0"]
+# Multi-process native runtime (runtime=native with a placement that asks for several
+# processes): Ray actors for rollout workers, policy servers and learner ranks. Same Ray
+# pin as RLInf, so one environment serves both runtimes.
+ray = ["ray[default]==2.58.0"]
+# LIBERO simulator integration (simulators/libero/). The LIBERO benchmark
+# is not on PyPI, so it installs from git; a SEPARATE environment is
+# recommended because LIBERO's stack pins numpy<2 and legacy gym. Follow
+# simulators/libero/README.md for the tested recipe (incl. the required
+# one-line fix to LIBERO's package layout before an editable install).
+libero = [
+    "libero @ git+https://github.com/Lifelong-Robot-Learning/LIBERO.git",
+    "robosuite==1.4.1",
+    "bddl==1.0.1",
+    "mujoco==2.3.7",   # robosuite 1.4.x breaks against mujoco 3.x
+    "gym==0.25.2",     # libero.libero.envs imports legacy gym for its vector envs
+    "numpy<2",
+    "matplotlib",
+    "easydict",
+    "future",
+]
+
+[dependency-groups]
+# `uv sync` installs the dev group by default, so a plain `uv sync` is a working test
+# environment (`uv sync --no-dev` leaves it out). The group is the `test` extra itself,
+# so uv and pip users test with the same set.
+dev = ["isaac-rl-posttraining[test]"]
+
+[tool.uv]
+# GR00T (Isaac-GR00T) pins torch 2.9; its flash-attn/torchvision wheels are built for it.
+constraint-dependencies = ["torch==2.9.0"]
+# CI and workstations run Linux x86_64: resolve only to wheels that exist there
+# (the CPU index otherwise picks a torchvision 0.24 build that ships Windows-ARM wheels only).
+required-environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+# Extras that cannot share one environment (different Ray pins, different torch indexes).
+conflicts = [
+    [
+        { extra = "cpu" },
+        { extra = "cuda" },
+    ],
+]
+
+# Both indexes are explicit: only torch and torchvision ever resolve from them, and only
+# through the `cpu` / `cuda` extras. Without either extra, torch comes from PyPI (CUDA).
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pypi", extra = "cuda" },
+]
+torchvision = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pypi", extra = "cuda" },
+]
+
+[tool.setuptools.packages.find]
+# Wildcards pick up each simulator's co-located config package
+# (simulators/<sim>/configs/, reached via train.yaml's Hydra search path).
+# Most tests/ and scripts/ directories carry no __init__.py; `exclude` keeps
+# the ones that do (simulators/v2d/tests/) out of the wheel as well.
+include = ["isaac_rl_posttraining*", "simulators", "simulators.g1_arena*", "simulators.isaaclab*", "simulators.libero*", "simulators.robolab*", "simulators.v2d*"]
+exclude = ["*.tests", "*.tests.*"]
+
+[tool.setuptools.package-data]
+# Hydra discovers these presets through package resources after installation.
+isaac_rl_posttraining = ["configs/**/*.yaml"]
+"simulators.g1_arena" = ["configs/**/*.yaml"]
+"simulators.isaaclab" = ["configs/**/*.yaml"]
+"simulators.libero" = ["configs/**/*.yaml"]
+"simulators.v2d" = ["configs/**/*.yaml"]
+
+[tool.pytest.ini_options]
+# Hardware/sim markers. The `pytest_collection_modifyitems` hook in
+# tests/conftest.py skips a marked test (with a clear reason) whenever its
+# dependency or environment is unavailable, so these actually gate execution
+# rather than being decorative. CI deselects them by marker expression; see
+# .github/workflows/ci.yml.
+markers = [
+    "arena: requires a running IsaacLab-Arena simulation (external checkout + GPU)",
+    "gpu: requires a CUDA-capable GPU",
+    "libero: requires the LIBERO simulation stack (MuJoCo/robosuite; CPU is enough)",
+    "rlinf: requires the optional RLInf runtime dependency",
+    "rlinf_cluster: starts a real Ray/RLInf runtime; runs only when ISAAC_RL_POSTTRAINING_RLINF_CLUSTER=1 requests it",
+    "native_ray: starts a local Ray instance for the multi-process native runtime (needs the ray extra)",
+    "slow: long-running test, excluded from the default CI lane",
+]
+# Fail on unknown markers so a typo can never silently become a no-op filter.
+addopts = "--strict-markers"
+# A hung test fails in 10 minutes instead of holding the job until the pipeline's
+# 60-minute limit (pytest-timeout ships with the [test] extra). Modules that boot
+# a simulator or load a real checkpoint disable it with `pytest.mark.timeout(0)`.
+timeout = 600

@@ -1,0 +1,2 @@
+# Collect a round, train on it, then publish the new weights (the reference recipe).
+kind: sync

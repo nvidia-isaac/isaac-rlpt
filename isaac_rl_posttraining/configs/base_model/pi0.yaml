@@ -1,0 +1,27 @@
+# pi0 base model (openpi runtime; requires the DSRL fork of openpi with the
+# noise-enabled infer -- see simulators/libero/README.md).
+#
+# Requires the optional openpi / openpi_client packages and a pi0 checkpoint
+# (base_model.ckpt). The action horizon comes from the checkpoint;
+# action_dim is required by the adapter when the policy does not expose one.
+
+defaults:
+  - base_base_model
+  - _self_
+
+name: pi0
+ckpt: null     
+bc_ckpt: null
+dataset_dir: null
+multitask_dirs: null
+task_dir: null
+server_url: null
+action_horizon: null
+action_dim: null
+# Fine-tuning (`algorithm=ppo`, experimental, or `iql` / `sft`: policies/pi0/flow_sde.py) also
+# needs the openpi training config of the checkpoint and the mapping from the simulator's
+# observation keys to the keys that config's input transforms expect, e.g.
+#   ++base_model.observation_keys={video.image: observation/image, state.q: observation/state}
+openpi_config: null
+# Empty rather than null, so the `++` override above can set it.
+observation_keys: {}

@@ -1,0 +1,71 @@
+# @package _global_
+# PPO over a steering actor on a FROZEN policy. The simulator, frozen base model, actor architecture
+# and steering action space stay those of DSRL, so runtime comparisons do not change task
+# semantics. The latent-steer setup sizes the actor through the SAC schema composed at
+# `algorithm` (that SAC is never trained); `ppo:` holds the update and the schedule. Batch sizes
+# are global: each learner rank trains on ppo.global_batch_size / placement.learner.ranks.
+#   python scripts/train.py algorithm=dsrl_ppo base_model.ckpt=<ckpt> ...
+defaults:
+  - base_dsrl_ppo@algorithm
+  - /ppo: base_ppo
+
+algorithm:
+  name: dsrl_ppo
+
+# The recipe the G1 Factory and LIBERO launchers validated. One decision is one whole decoded chunk:
+# the frozen policy decodes base_model.action_horizon steps (the simulator's GR00T chunk when it
+# declares one, LIBERO's 16, else GR00T's full 40), the actor emits one latent per step, and every
+# step executes. The actor starts from the reference PPO initialisation: unsquashed Gaussian, unit
+# initial standard deviation.
+base_model:
+  action_horizon: ${oc.select:simulator.gr00t_eval.action_horizon,40}
+
+training:
+  chunk_size: ${base_model.action_horizon}
+
+policy:
+  official_policy_init: true
+  use_tanh_output: false
+  log_std_init: 0
+
+ppo:
+  iterations: 100
+  eval_only: false
+  resume_from: null
+  episodes_per_environment: 1
+  eval_episodes_per_environment: 1
+  eval_every: 10
+  checkpoint_every: 10
+  checkpoint_retention: best_last_final  # keeps the best-evaluated, the newest and the final checkpoint; 'all' keeps every one
+  learning_rate: 3.0e-4
+  value_learning_rate: null              # null = the value function trains at learning_rate
+  optimizer: adam
+  adam_betas: [0.9, 0.999]
+  optimizer_eps: 1.0e-5
+  weight_decay: 0.0
+  clip_ratio: 0.2
+  value_clip: 0.2
+  value_loss: mse                        # mse | huber (see huber_delta)
+  huber_delta: 1.0
+  value_loss_coef: 0.5
+  entropy_coef: 0.0
+  update_epochs: 4
+  global_batch_size: 64
+  micro_batch_size: null                 # null = one forward/backward per rank minibatch
+  max_grad_norm: 0.5
+  target_kl: null
+  gamma: 0.99
+  gae_lambda: 0.95
+  discount_per: simulator_step           # semi-Markov: one discount per executed simulator step
+  bootstrap_at_time_limit: true          # a time-limit truncation bootstraps from the successor value
+  eval_seed: 100000
+  # Use fresh simulator workers for fixed evaluation and keep training history out.
+  isolate_evaluation_workers: true
+  # Require deterministic torch kernels in evaluation policy processes.
+  deterministic_kernels: true
+  # Sample the stochastic steering policy from a per-environment seeded stream.
+  sample_evaluation_actions: true
+  # GR00T flow-SDE fine-tuning only (algorithm=ppo); off here.
+  noise_level: null
+  cache_features: false
+  frozen_submodules: []

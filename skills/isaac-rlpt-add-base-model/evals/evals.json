@@ -1,0 +1,51 @@
+{
+  "skill_name": "isaac-rlpt-add-base-model",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add a base model called toy_vla: a BaseModelPolicy with horizon 8, 7-wide actions, latent_dim 7, deterministic decode, registered and passing the base-model contract suite.",
+      "expected_output": "policies/toy_vla/ with base_model.py, a registry entry, a config group, and the contract tests passing.",
+      "expectations": [
+        "isaac_rl_posttraining/policies/toy_vla/base_model.py defines a BaseModelPolicy subclass with from_dsrl_config",
+        "_BASE_MODELS gains a toy_vla entry",
+        "configs/base_model/toy_vla.yaml lists base_base_model in defaults and name: toy_vla",
+        "infer raises ValueError for an invalid noise shape",
+        "tests/unit/test_base_model_policy.py passes with toy_vla enrolled"
+      ]
+    }
+  ],
+  "trigger_evals": [
+    {
+      "query": "I want DSRL to steer OpenVLA instead of GR00T, how do I add it as a base model?",
+      "should_trigger": true
+    },
+    {
+      "query": "implement a BaseModelPolicy for our in-house flow policy and register it",
+      "should_trigger": true
+    },
+    {
+      "query": "get_base_model('octo') raises unknown base model, how do I add octo?",
+      "should_trigger": true
+    },
+    {
+      "query": "add a PPO fine-tuning adapter for a new flow-matching policy",
+      "should_trigger": true
+    },
+    {
+      "query": "point the GR00T base model at a different checkpoint directory",
+      "should_trigger": false
+    },
+    {
+      "query": "add my robot simulator to the repo",
+      "should_trigger": false
+    },
+    {
+      "query": "add a new off-policy algorithm to the registry",
+      "should_trigger": false
+    },
+    {
+      "query": "what success rate does pi0 get on LIBERO-90?",
+      "should_trigger": false
+    }
+  ]
+}

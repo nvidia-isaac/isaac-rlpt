@@ -1,0 +1,9 @@
+# Shared policy (actor) parameters
+log_std_init: 0
+log_std_min: -20.0
+log_std_max: 2.0
+
+# MLP-only parameters (used when training.chunk_size is null)
+use_tanh_output: true
+deterministic: false
+official_policy_init: false

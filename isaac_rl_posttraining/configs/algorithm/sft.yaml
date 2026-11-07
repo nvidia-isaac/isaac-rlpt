@@ -1,0 +1,21 @@
+# Supervised fine-tuning over a trainable base model (GR00T N1.7, pi0).
+#
+# Pure offline: no live collection. The base model's VLM backbone stays frozen.
+#   python scripts/train.py algorithm=sft base_model=gr00t_n17 base_model.ckpt=<ckpt> \
+#       base_model.dataset_dir=<lerobot dataset>
+# Evaluation calls infer(obs) on the trained policy.
+
+defaults:
+  - base_sft
+  - _self_
+
+name: sft
+batch_size: 256
+num_updates_per_train_step: 1
+actor_optimizer_lr: 1.0e-4
+actor_optimizer_weight_decay: 1.0e-5
+# GR00T's own fine-tuning recipe: 5% linear warmup, cosine decay, clip at 1.0.
+actor_lr_schedule: cosine
+actor_lr_warmup_ratio: 0.05
+actor_max_grad_norm: 1.0
+learning_starts: 0

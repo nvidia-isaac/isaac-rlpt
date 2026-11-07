@@ -1,0 +1,2 @@
+# Rollout workers collect continuously; schedule.max_policy_lag bounds how old the data may be.
+kind: async

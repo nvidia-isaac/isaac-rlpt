@@ -1,0 +1,35 @@
+# DreamZero in-process base model: loads the frozen WAN world-action model in
+# this process and steers it by injecting the initial action-latent noise of
+# the flow-matching denoise (the RLinf-validated DSRL mechanism).
+#
+# Requires the "dreamzero-local" extra plus the groot package (the DreamZero
+# repo, installed with --no-deps --ignore-requires-python); see
+# docs/base_models.md. Defaults below are the 5B/LIBERO recipe.
+#
+# Steering geometry: pair with dsrl.noise_dim=32 (the WAN head's latent
+# width), training.chunk_size=null (one latent per decision, tiled), and
+# dsrl.action_exec_len equal to the checkpoint's action horizon - validated
+# at build time.
+
+defaults:
+  - base_base_model
+  - _self_
+
+name: dreamzero_local
+ckpt: null                         # REQUIRED: bundled SFT checkpoint dir (config.json + model.safetensors)
+embodiment_tag: libero_sim         # groot embodiment tag with a registered EmbodimentSpec
+metadata_json_path: null           # default: <ckpt>/experiment_cfg/metadata.json
+tokenizer_path: google/umt5-xxl
+text_encoder_cpu_offload: false    # park umt5-xxl (~10.6 GiB) on CPU with prompt caching
+torch_compile: true                # compile the causal-attention hot paths (reduce-overhead)
+num_dit_steps: null                # real DiT computes per denoise: 5-8 or 16 (null = model default, 8)
+predict_micro_batch_size: 1        # rows per model call; keep 1 (see base model docstring)
+target_video_height: null          # 5B/LIBERO recipe: 160
+target_video_width: null           # 5B/LIBERO recipe: 320
+bc_ckpt: null
+dataset_dir: null
+multitask_dirs: null
+task_dir: null
+server_url: null
+action_horizon: null               # optional pin; must match the checkpoint when set
+action_dim: null                   # optional pin; must match the decoded env width when set

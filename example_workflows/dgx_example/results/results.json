@@ -1,0 +1,6 @@
+{
+  "workflow": "dgx_example",
+  "evaluator": "none: this workflow reports collection throughput, not success rates",
+  "date": "2026-09-03",
+  "rows": []
+}

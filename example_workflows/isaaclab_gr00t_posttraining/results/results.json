@@ -1,0 +1,75 @@
+{
+  "workflow": "isaaclab_gr00t_posttraining",
+  "evaluator": "Isaac Lab stack-cube under the frozen policy, stochastic steering actor, success when the stacking condition holds at episode end. The frozen policy was scored twice in one job with no gradient step between the draws and the two are pooled. Peak is the best evaluation of a run and final is its last; each row is one training run",
+  "date": "2026-09-21",
+  "rows": [
+    {
+      "task": "stack cube",
+      "method": "DSRL",
+      "base": {
+        "successes": 134,
+        "episodes": 200
+      },
+      "note": "",
+      "peak": {
+        "successes": 35,
+        "episodes": 50
+      },
+      "final": {
+        "successes": 26,
+        "episodes": 50
+      }
+    },
+    {
+      "task": "stack cube",
+      "method": "RFS",
+      "base": {
+        "successes": 134,
+        "episodes": 200
+      },
+      "note": "",
+      "peak": {
+        "successes": 31,
+        "episodes": 50
+      },
+      "final": {
+        "successes": 22,
+        "episodes": 50
+      }
+    },
+    {
+      "task": "stack cube",
+      "method": "SAC-edit",
+      "base": {
+        "successes": 134,
+        "episodes": 200
+      },
+      "note": "",
+      "peak": {
+        "successes": 28,
+        "episodes": 50
+      },
+      "final": {
+        "successes": 22,
+        "episodes": 50
+      }
+    },
+    {
+      "task": "stack cube",
+      "method": "PPO",
+      "base": {
+        "successes": 134,
+        "episodes": 200
+      },
+      "note": "the same checkpoint scored 35/64 under this evaluator before training",
+      "peak": {
+        "successes": 55,
+        "episodes": 64
+      },
+      "final": {
+        "successes": 55,
+        "episodes": 64
+      }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+# G1 Factory simulator: IsaacLab-Arena locomanipulation with the Unitree G1
+# (35-dim whole-body-control joint actions). Install and wiring:
+# simulators/g1_arena/README.md.
+#
+# The simulator runs in its own process behind the tcp:// env-server
+# transport (simulators/g1_arena/env_server.py); the launchers in scripts/ boot
+# it and connect the learner.
+
+provider: g1_arena
+
+# The nine G1 Factory benchmark tasks (the LM* locomanipulation task ids the
+# Arena checkout registers).
+tasks:
+  - LMPushButton
+  - LMBoxLift
+  - LMDrillLift
+  - LMPickDrillFromHolder
+  - LMDrillLiftObs
+  - LMDrillPnP
+  - LMBoxLiftFloor
+  - LMBoxTableToShelfPnP
+  - LMPushShelfForward
+
+# Per-task client-side episode caps in simulator steps (longest
+# demonstration plus margin). The Arena server enforces no horizon, and a
+# cap that is too small truncates episodes that would have succeeded and
+# distorts success rates. This map is the single source of truth:
+# example_workflows/g1_arena_posttraining/scripts/train.sh and example_workflows/g1_arena_posttraining/scripts/eval.sh read this block (keep the
+# plain "task: steps" two-space-indented format), and
+# tests/unit/test_simulators.py pins launcher/config agreement.
+max_episode_steps:
+  LMPushButton: 350
+  LMBoxLift: 450
+  LMDrillLift: 450
+  LMPickDrillFromHolder: 500
+  LMDrillLiftObs: 650
+  LMDrillPnP: 650
+  LMBoxLiftFloor: 750
+  LMBoxTableToShelfPnP: 900
+  LMPushShelfForward: 1000
+
+# Client-side environment geometry (the learner reads these; the launchers
+# pass the matching flags to the env server).
+action_dim: 35          # whole-body-control joint action width
+image_resolution: 0     # 0 = native ego frame (the policy's own processor resizes)
+
+# Cap on the frozen policy's batched decode (environments per forward). null =
+# the simulator entry's own cap (16, which bounds the decode's memory on a
+# 48 GB card); a card with room for the whole batch sets it to training.num_envs.
+decode_batch_size: null

@@ -1,0 +1,159 @@
+# CPU-only checks for every pull request and every push to main. What each job proves:
+#   lint                 ruff (lint + format) and mypy over the maintained path sets and every test tree
+#   unit                 the CPU-safe suite on Python 3.12 and 3.11 (the floor declared in pyproject):
+#                        tests/, every simulator's tests/, every workflow's tests/
+#   examples             every workflow's smoke.sh, the check a user runs after installing
+#   rlinf-runtime        the RLInf runtime on a real Ray cluster with the pinned rlinf release
+#   native-ray-runtime   runtime=native on several processes (Ray actors), the ray extra
+#
+# Hardware-gated tests (gpu / arena / libero markers) are deselected; the collection hook in
+# tests/conftest.py also skips them with a reason wherever their dependency is missing.
+# The documentation site builds and publishes in docs.yml.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  # Every lane tests the Python setup-python installed; a mismatch is an error, not a download.
+  UV_PYTHON_DOWNLOADS: "never"
+  # The tests use small tensors; one BLAS thread per process avoids oversubscribing the runner.
+  OMP_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  # The hardware-gated markers, deselected with -m; see pyproject [tool.pytest.ini_options].
+  CPU_SAFE: not gpu and not arena and not libero
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Path sets held to ruff today, and the test trees.
+      LINTED: >-
+        isaac_rl_posttraining/runtimes isaac_rl_posttraining/rollouts/action_chunk.py
+        isaac_rl_posttraining/runners/plan_checks.py isaac_rl_posttraining/runners/build.py
+        isaac_rl_posttraining/algorithms/ppo scripts/ppo scripts/bench_gr00t_policy_services.py
+        scripts/bench_rlinf_ppo_fsdp.py example_workflows tools
+        tests simulators/g1_arena/tests simulators/isaaclab/tests simulators/libero/tests
+        simulators/robolab/tests simulators/v2d/tests
+      TYPED: >-
+        isaac_rl_posttraining/runtimes isaac_rl_posttraining/rollouts/action_chunk.py
+        isaac_rl_posttraining/runners/plan_checks.py isaac_rl_posttraining/runners/build.py
+        scripts/bench_gr00t_policy_services.py isaac_rl_posttraining/algorithms/ppo scripts/ppo
+        scripts/bench_rlinf_ppo_fsdp.py example_workflows tools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --progress-bar off ruff==0.16.8 mypy==2.3.1
+      - run: ruff check $LINTED
+      - run: ruff format --check $LINTED
+      - run: mypy --ignore-missing-imports --follow-imports=skip $TYPED
+
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.11"]
+    env:
+      UV_PYTHON: ${{ matrix.python }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e  # v6.8.0
+        with:
+          version: "0.11.19"
+          enable-cache: true
+      # --locked fails the lane when uv.lock has drifted from pyproject.toml; --extra cpu takes
+      # torch from the PyTorch CPU index.
+      - run: uv sync --locked --extra cpu
+      - run: echo "$PWD/.venv/bin" >> "$GITHUB_PATH"  # activate the environment for later steps
+      - run: >-
+          pytest tests/ simulators/*/tests/ example_workflows/*/tests/
+          -m "$CPU_SAFE" -q --durations=25
+
+  examples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      UV_PYTHON: "3.12"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e  # v6.8.0
+        with:
+          version: "0.11.19"
+          enable-cache: true
+      - run: uv sync --locked --extra cpu
+      - run: echo "$PWD/.venv/bin" >> "$GITHUB_PATH"  # activate the environment for later steps
+      - run: python -m example_workflows._common.smoke
+
+  # The only lane that starts a real Ray cluster with RLInf; it needs more than one core.
+  rlinf-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      UV_PYTHON: "3.11"
+      ISAAC_RL_POSTTRAINING_RLINF_CLUSTER: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e  # v6.8.0
+        with:
+          version: "0.11.19"
+          enable-cache: true
+      - run: nproc
+      - run: uv sync --locked --extra cpu --extra rlinf
+      - run: echo "$PWD/.venv/bin" >> "$GITHUB_PATH"  # activate the environment for later steps
+      - run: >-
+          pytest tests/unit/test_runtime_contract.py tests/unit/test_steering_runtime_policy.py
+          tests/unit/test_libero_runtime.py tests/unit/test_runtime_training_lifecycle.py
+          tests/unit/test_rlinf_learner_runtime.py
+          tests/integration/test_rlinf_runtime.py
+          tests/integration/test_algorithm_placements.py::test_dsrl_ppo_trains_on_rlinf
+          tests/integration/test_policy_service_api.py
+          -q --durations=10
+
+  # The multi-process native runtime (Ray actors for rollout workers, policy servers and learner
+  # ranks) on a local Ray instance.
+  native-ray-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      UV_PYTHON: "3.12"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e  # v6.8.0
+        with:
+          version: "0.11.19"
+          enable-cache: true
+      - run: uv sync --locked --extra cpu --extra ray
+      - run: echo "$PWD/.venv/bin" >> "$GITHUB_PATH"  # activate the environment for later steps
+      - run: >-
+          pytest tests/integration/test_native_ray_runtime.py tests/integration/test_native_ray_launch.py
+          tests/integration/test_native_ray_served_ppo.py tests/integration/test_policy_service_api.py
+          tests/unit/test_native_processes.py -q --durations=10
+

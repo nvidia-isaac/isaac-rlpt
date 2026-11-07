@@ -1,0 +1,45 @@
+# Reference settings for the default training launch.
+task:
+  horizon_simulator_steps: 550
+  executed_actions_per_decision: 4
+  maximum_decisions: 138
+  fixed_reset: true
+  reset_validation: null
+training:
+  num_envs: 128
+  num_rollouts: 704000
+  seed: 2
+  chunk_size: 16
+  save_interval: 10000
+  policy_decode_batch_size: 16
+  rollout_count_by: step
+  train_after_episode: false
+  max_updates_per_burst: 128
+algorithm:
+  learning_starts: 70400
+  batch_size: 64
+  num_updates_per_train_step: 1
+  num_critic_updates_per_actor_update: 4
+  ent_coef: 0.005
+  td_target_clip: [0.0, 1.0]
+  critic_target_reduction: mean
+  pooled_critic_features: false
+  latent_prior_kl_coef: 0.0
+  train_actor_with_prior_kl: false
+  train_actor_with_entropy: true
+  train_critic_with_entropy: false
+  gamma: 1.0
+  bootstrap_at_truncation: false
+evaluation:
+  enabled: false
+  eval_num_envs: 32
+  eval_num_episodes: 32
+  eval_freq: 0
+  eval_at_episode_boundary: true
+  eval_on_first_step: false
+  eval_base: false
+  action_selection: sample
+  reset_seed: 10000
+success:
+  evaluator: lift_hold
+  final_height_tolerance_m: 0.01

@@ -1,0 +1,45 @@
+# RFS uses the validated REDQ/SAC optimizer over joint [flow-noise, residual] actions.
+
+defaults:
+  - base_rfs
+  - _self_
+
+name: rfs
+learning_starts: 1200
+actor_learning_starts: null
+actor_learning_stops: null
+ent_coef: "auto"
+target_entropy: 0.0
+target_update_interval: 1
+gamma: 0.995
+tau: 0.005
+batch_size: 64
+
+num_critics: 4
+n_critics_to_sample: 2
+critic_target_reduction: min
+num_critic_updates_per_actor_update: 4
+critic_reduction: "min"
+num_updates_per_train_step: 10
+augment_pixels: false
+augment_color_jitter: false
+temperature_loss_type: log_alpha
+bootstrap_at_truncation: false
+
+pooled_critic_features: false
+train_critic_with_entropy: false
+train_actor_with_entropy: true
+train_actor_with_kl_divergence: false
+
+actor_optimizer_lr: 5e-5
+actor_optimizer_eps: 1.0e-8
+actor_optimizer_weight_decay: 1.0e-6
+
+critic_optimizer_lr: 1e-4
+critic_optimizer_betas: [0.95, 0.999]
+critic_optimizer_eps: 1.0e-8
+critic_optimizer_weight_decay: 1.0e-6
+
+ent_coef_lr: 1e-4
+latent_prior_kl_coef: 0.0
+train_actor_with_prior_kl: false

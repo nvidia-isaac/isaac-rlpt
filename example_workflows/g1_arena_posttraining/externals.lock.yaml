@@ -1,0 +1,11 @@
+# Isaac Lab and IsaacLab-Arena for this workflow, pinned by commit (G1 Factory and Isaac-GR00T are pinned in
+# ../dgx_example/externals.lock.yaml). fetch_externals.sh checks both out in G1 Factory's submodules.
+externals:
+  - name: IsaacLab
+    url: https://github.com/isaac-sim/IsaacLab
+    commit: b770aab7ac986123a94d0615413039608e76927b   # head of the release/3.0.0 branch
+    purpose: the simulator (Isaac Sim 6.2.0.0 comes from its root pyproject.toml), the task registry and the train / play entry points the isaac_rlpt module plugs into
+  - name: IsaacLab-Arena
+    url: https://github.com/isaac-sim/IsaacLab-Arena
+    commit: 3e60147a8206599b70e95948ce5fb02f3cb25bb7   # "Upgrade to Isaac Lab 3.0 GA"; the G1 Factory pin (c5826c87) predates Isaac Lab 3.0 GA
+    purpose: the Arena environments and the G1 whole-body controller; the per-environment WBC patch in simulators/g1_arena/patches/ applies on top

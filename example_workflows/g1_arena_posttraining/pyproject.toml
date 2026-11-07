@@ -1,0 +1,127 @@
+# The G1 Factory workflow's own environment: Isaac Sim 6.2, Isaac Lab (release/3.0.0) and IsaacLab-Arena (editable,
+# from the G1 Factory checkout, so that `uv run isaaclab train` finds Isaac Lab's scripts), the G1 Factory
+# tasks, GR00T N1.7 and this repository, in one Python 3.12 environment.
+# It is separate from the Isaac Lab Franka workflow's because that one needs GR00T N1.5 (transformers 4.51.3).
+# The versions follow Isaac Lab's root pyproject.toml at the commit in externals.lock.yaml (torch 2.11, Isaac Sim 6.2.0.0).
+#   bash scripts/fetch_externals.sh && uv sync
+[project]
+name = "g1-arena-posttraining"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "isaac-rl-posttraining",
+    "g1-factory",
+    "isaaclab-arena",
+    # Isaac Lab release/3.0.0 from source: its root project carries every third-party pin (Isaac Sim 6.2, torch 2.11).
+    "isaaclab-dev[isaacsim,ov,rsl-rl,rerun]",
+    "isaaclab-mimic",
+    "isaaclab-teleop",
+    "gr00t",
+    # Direct dependencies, so [tool.uv.sources] routes them to the CUDA 13.0 index.
+    "torch==2.11.0",
+    "torchvision==0.26.0",
+    "torchaudio==2.11.0",
+]
+
+[tool.uv]
+package = false
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+prerelease = "allow"
+index-strategy = "unsafe-best-match"
+python-preference = "only-managed"
+# Isaac Lab's overrides (its own root project's; uv does not read a dependency's), with GR00T N1.7's transformers.
+override-dependencies = [
+    "numpy>=2",
+    "mujoco~=3.12.0",
+    "mujoco-warp~=3.12.0",
+    "newton[sim]==1.6.1",
+    "newton-usd-schemas>=0.5.0",
+    "usd-exchange==3.0.1",
+    "usd-optimize~=1.3.1",
+    "torch==2.11.0",
+    "torchvision==0.26.0",
+    "fsspec>=2026.6.0",
+    "packaging>=20,<27",
+    "urllib3>=2.8.0",
+    "transformers>=4.57.3,<5",
+    # IsaacLab-Arena needs 16.1.1; Isaac Sim's pin (<15) is over-strict.
+    "websockets==16.1.1",
+]
+constraint-dependencies = [
+    "pin-pink==3.3.0",
+    "pyglet<3",
+    "tinyobjloader==2.0.0rc13",
+]
+
+# GR00T N1.7's own requirements pin torch 2.9, numpy 1.26 and a flash-attn wheel built for torch 2.9;
+# install it with the runtime set the policy code imports instead. Without flash-attn GR00T falls back
+# to PyTorch (sdpa) attention. Video decoding (torchcodec) is left out: this repository decodes with decord.
+[[tool.uv.dependency-metadata]]
+name = "gr00t"
+version = "0.1.0"
+# Its pyproject.toml declares a `dev` extra; uv re-resolves on every `uv run` unless this says so too.
+provides-extras = ["dev"]
+requires-dist = [
+    "transformers>=4.57.3,<5",
+    "albumentations==1.4.18",
+    "diffusers==0.35.1",
+    "peft",
+    "huggingface-hub",
+    "opencv-python-headless",
+    "dm-tree",
+    "einops",
+    "gymnasium",
+    "lmdb",
+    "msgpack",
+    "msgpack-numpy",
+    "omegaconf",
+    "pandas",
+    "pyzmq",
+    "scipy",
+    "termcolor",
+    "tyro",
+]
+
+[[tool.uv.index]]
+url = "https://pypi.nvidia.com"
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+isaac-rl-posttraining = { path = "../..", editable = true }
+g1-factory = { path = ".externals/g1-factory", editable = true }
+gr00t = { path = ".externals/g1-factory/submodules/Isaac-GR00T", editable = true }
+isaaclab-arena = { path = ".externals/g1-factory/submodules/IsaacLab-Arena", editable = true }
+# The NVIDIA index carries only incompatible prereleases of these.
+mujoco-usd-converter = { index = "pypi" }
+isaacteleop = { index = "pypi" }
+omniverseclient = { index = "pypi" }
+ovphysx = { index = "pypi" }
+ovrtx = { index = "pypi" }
+ovstage = { index = "pypi" }
+torch = { index = "pytorch-cu130" }
+torchvision = { index = "pytorch-cu130" }
+torchaudio = { index = "pytorch-cu130" }
+isaaclab-dev = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab", editable = true }
+isaaclab = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab", editable = true }
+isaaclab-assets = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_assets", editable = true }
+isaaclab-contrib = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_contrib", editable = true }
+isaaclab-experimental = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_experimental", editable = true }
+isaaclab-mimic = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_mimic", editable = true }
+isaaclab-newton = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_newton", editable = true }
+isaaclab-ov = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_ov", editable = true }
+isaaclab-physx = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_physx", editable = true }
+isaaclab-ppisp = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_ppisp", editable = true }
+isaaclab-rl = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_rl", editable = true }
+isaaclab-tasks = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_tasks", editable = true }
+isaaclab-tasks-experimental = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_tasks_experimental", editable = true }
+isaaclab-teleop = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_teleop", editable = true }
+isaaclab-visualizers = { path = ".externals/g1-factory/submodules/IsaacLab-Arena/submodules/IsaacLab/source/isaaclab_visualizers", editable = true }

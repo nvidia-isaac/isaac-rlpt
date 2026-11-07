@@ -1,0 +1,21 @@
+{
+  "workflow": "g1_arena_posttraining",
+  "evaluator": "G1 Factory served by `simulators/g1_arena/env_server.py`, one scene at a time, GPU physics, native camera frame, stochastic steering actor, success when the task's success term fires within 1000 simulator steps (20 s, G1 Factory's episode length). The base checkpoint `nvidia/G1-Factory-GR00T-1.7` and the released steering checkpoint are scored on the same 300 held-out episodes (seeds 5050–5199 and 6000–6149). Peak is the checkpoint chosen by its in-training evaluation. This differs from G1 Factory's evaluation, which reports 42% for the base checkpoint on PushButton",
+  "date": "2026-10-21",
+  "rows": [
+    {
+      "task": "PushButton",
+      "method": "DSRL",
+      "base": {
+        "successes": 184,
+        "episodes": 300
+      },
+      "peak": {
+        "successes": 246,
+        "episodes": 300
+      },
+      "final": null,
+      "note": "released checkpoint `nvidia/Isaac-RLPT-GR00T-1.7-G1-Factory-PushButton-DSRL`, 72,488 of 80,000 steps"
+    }
+  ]
+}
