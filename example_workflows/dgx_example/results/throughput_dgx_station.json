@@ -1,0 +1,503 @@
+{
+  "workflow": "dgx_example",
+  "date": "2026-09-18",
+  "runtime": "the runtime layer's episode-synchronous batched worker on the DGX Station (GB300 + RTX Pro 6000), whole-batch decode; the native rows and the split on the RLinf runtime",
+  "recipe": {
+    "task": "DrillLift",
+    "env_steps_per_env": 1350,
+    "min_env_steps": 6400,
+    "action_exec_len": 8,
+    "max_updates_per_burst": 20,
+    "sac_batch_size": 64,
+    "image_shortest_edge": 256,
+    "decode_whole_batch": true,
+    "evaluation": false
+  },
+  "gpus": {
+    "gb300": {
+      "label": "GB300",
+      "host": "GB300 DGX Station (Grace CPU, aarch64)"
+    },
+    "rtx_pro_6000": {
+      "label": "RTX Pro 6000 Blackwell (96 GB)",
+      "host": "GB300 DGX Station (Grace CPU, aarch64)"
+    }
+  },
+  "layouts": {
+    "gb300_only": {
+      "label": "GB300 GPU only",
+      "shape": "single",
+      "simulator_gpu": "gb300",
+      "learner_gpu": "gb300",
+      "color": "#0074DF",
+      "rollout_runtime": "native",
+      "schedule": "sync",
+      "simulator_servers": 1
+    },
+    "rtx_pro_6000_only": {
+      "label": "RTX Pro 6000 only",
+      "shape": "single",
+      "simulator_gpu": "rtx_pro_6000",
+      "learner_gpu": "rtx_pro_6000",
+      "color": "#EF9100",
+      "rollout_runtime": "native",
+      "schedule": "sync",
+      "simulator_servers": 1
+    },
+    "dgx_station": {
+      "label": "GB300 DGX Station (both GPUs)",
+      "shape": "split",
+      "simulator_gpu": "rtx_pro_6000",
+      "learner_gpu": "gb300",
+      "color": "#76B900",
+      "rollout_runtime": "native",
+      "schedule": "sync",
+      "simulator_servers": 1
+    },
+    "dgx_station_rlinf": {
+      "label": "GB300 DGX Station (both GPUs), RLinf runtime",
+      "shape": "split",
+      "simulator_gpu": "rtx_pro_6000",
+      "learner_gpu": "gb300",
+      "color": "#A4D65E",
+      "rollout_runtime": "rlinf",
+      "schedule": "sync",
+      "simulator_servers": 1
+    },
+    "dgx_station_rlinf_2srv": {
+      "label": "GB300 DGX Station (both GPUs), RLinf runtime, two servers",
+      "shape": "split",
+      "simulator_gpu": "rtx_pro_6000",
+      "learner_gpu": "gb300",
+      "color": "#FFB000",
+      "rollout_runtime": "rlinf",
+      "schedule": "sync",
+      "simulator_servers": 2
+    }
+  },
+  "rows": [
+    {
+      "simulator": "arena",
+      "layout": "gb300_only",
+      "num_envs": 8,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 43.6,
+        "std": 1.9,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 18.8,
+        "simulator": null
+      },
+      "wandb_run": "ixef3l2y",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.125,
+      "decode_s": 0.226,
+      "sac_update_s": 1.199,
+      "wire_ms": 1.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "gb300_only",
+      "num_envs": 64,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 112.9,
+        "std": 0.7,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 27.4,
+        "simulator": null
+      },
+      "wandb_run": "z2m3w636",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.41,
+      "decode_s": 0.637,
+      "sac_update_s": 1.253,
+      "wire_ms": 2.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "gb300_only",
+      "num_envs": 128,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 120.1,
+        "std": 0.4,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 36.4,
+        "simulator": null
+      },
+      "wandb_run": "4c629di4",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.778,
+      "decode_s": 1.194,
+      "sac_update_s": 1.292,
+      "wire_ms": 4.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "gb300_only",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 126.5,
+        "std": 1.2,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 53.3,
+        "simulator": null
+      },
+      "wandb_run": "piwxbdiu",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 1.455,
+      "decode_s": 2.257,
+      "sac_update_s": 1.283,
+      "wire_ms": 9.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "rtx_pro_6000_only",
+      "num_envs": 8,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 63.2,
+        "std": 2.4,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 16.6,
+        "simulator": null
+      },
+      "wandb_run": "2bpiam1m",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.086,
+      "decode_s": 0.222,
+      "sac_update_s": 1.169,
+      "wire_ms": 1.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "rtx_pro_6000_only",
+      "num_envs": 64,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 208.4,
+        "std": 4.4,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 25.2,
+        "simulator": null
+      },
+      "wandb_run": "zcuci1lr",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.164,
+      "decode_s": 0.731,
+      "sac_update_s": 1.19,
+      "wire_ms": 2.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "rtx_pro_6000_only",
+      "num_envs": 128,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 216.3,
+        "std": 0.8,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 34.7,
+        "simulator": null
+      },
+      "wandb_run": "i2zr6a3j",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.304,
+      "decode_s": 1.497,
+      "sac_update_s": 1.213,
+      "wire_ms": 4.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "rtx_pro_6000_only",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 226.6,
+        "std": 1.7,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 51.7,
+        "simulator": null
+      },
+      "wandb_run": "s23we3um",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.543,
+      "decode_s": 3.068,
+      "sac_update_s": 1.211,
+      "wire_ms": 8.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station",
+      "num_envs": 8,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 57.1,
+        "std": 4.5,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 8.4,
+        "simulator": 8.8
+      },
+      "wandb_run": "ou920pz8",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.087,
+      "decode_s": 0.241,
+      "sac_update_s": 1.247,
+      "wire_ms": 1.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station",
+      "num_envs": 64,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 225.7,
+        "std": 5.1,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 12.2,
+        "simulator": 13.8
+      },
+      "wandb_run": "r7s9byzy",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.164,
+      "decode_s": 0.651,
+      "sac_update_s": 1.254,
+      "wire_ms": 2.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station",
+      "num_envs": 128,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 244.8,
+        "std": 5.3,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 15.9,
+        "simulator": 19.4
+      },
+      "wandb_run": "4otfnx21",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.304,
+      "decode_s": 1.162,
+      "sac_update_s": 1.296,
+      "wire_ms": 4.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 255.0,
+        "std": 1.4,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 24.5,
+        "simulator": 27.4
+      },
+      "wandb_run": "q36gh7zg",
+      "note": "the DGX Station, 2026-09-18",
+      "env_step_s": 0.544,
+      "decode_s": 2.259,
+      "sac_update_s": 1.278,
+      "wire_ms": 9.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_rlinf",
+      "num_envs": 8,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 58.6,
+        "std": 4.8,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 15.7,
+        "simulator": 8.8
+      },
+      "wandb_run": "tg56obep",
+      "note": "the DGX Station, 2026-09-18; the rollout worker as an RLinf-placed Ray actor on the learner's card",
+      "env_step_s": 0.083,
+      "decode_s": 0.269,
+      "sac_update_s": 1.188,
+      "wire_ms": 1.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_rlinf",
+      "num_envs": 64,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 218.2,
+        "std": 1.4,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 19.1,
+        "simulator": 13.8
+      },
+      "wandb_run": "73pmljn4",
+      "note": "the DGX Station, 2026-09-18; the rollout worker as an RLinf-placed Ray actor on the learner's card",
+      "env_step_s": 0.159,
+      "decode_s": 0.697,
+      "sac_update_s": 1.193,
+      "wire_ms": 2.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_rlinf",
+      "num_envs": 128,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 233.7,
+        "std": 2.3,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 23.0,
+        "simulator": 18.7
+      },
+      "wandb_run": "xrhneyl1",
+      "note": "the DGX Station, 2026-09-18; the rollout worker as an RLinf-placed Ray actor on the learner's card",
+      "env_step_s": 0.302,
+      "decode_s": 1.275,
+      "sac_update_s": 1.244,
+      "wire_ms": 4.0
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_rlinf",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 251.8,
+        "std": 2.4,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 30.7,
+        "simulator": 27.5
+      },
+      "wandb_run": "9mlzkksr",
+      "note": "the DGX Station, 2026-09-18; the rollout worker as an RLinf-placed Ray actor on the learner's card",
+      "env_step_s": 0.537,
+      "decode_s": 2.489,
+      "sac_update_s": 1.266,
+      "wire_ms": 8.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_rlinf",
+      "num_envs": 512,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 255.7,
+        "std": 1.3,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 46.4,
+        "simulator": 48.5
+      },
+      "wandb_run": "axxql8ep",
+      "note": "the DGX Station, 2026-09-19; the rollout worker as an RLinf-placed Ray actor on the learner's card",
+      "iteration_env_steps_per_s": {
+        "mean": 247.2,
+        "std": 1.3,
+        "cycles": 3
+      },
+      "collect_s": 785.5,
+      "train_s": 26.8,
+      "publish_s": 0.0,
+      "env_step_s": 1.041,
+      "decode_s": 4.817,
+      "sac_update_s": 1.275,
+      "wire_ms": 19.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_rlinf_2srv",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 335.6,
+        "std": 4.8,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 38.1,
+        "simulator": 37.1
+      },
+      "wandb_run": "fve5rage",
+      "note": "the DGX Station, 2026-09-19; two Arena servers of 128 environments on the RTX Pro 6000, one RLinf-placed rollout actor each on the GB300",
+      "iteration_env_steps_per_s": {
+        "mean": 308.9,
+        "std": 4.6,
+        "cycles": 3
+      },
+      "collect_s": 303.3,
+      "train_s": 26.0,
+      "publish_s": 0.0,
+      "env_step_s": 0.474,
+      "decode_s": 1.338,
+      "sac_update_s": 1.227,
+      "wire_ms": 4.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_rlinf_2srv",
+      "num_envs": 512,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 358.5,
+        "std": 4.8,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 53.7,
+        "simulator": 54.5
+      },
+      "wandb_run": "40vh7ilx",
+      "note": "the DGX Station, 2026-09-19; two Arena servers of 256 environments on the RTX Pro 6000, one RLinf-placed rollout actor each on the GB300",
+      "iteration_env_steps_per_s": {
+        "mean": 342.2,
+        "std": 4.3,
+        "cycles": 3
+      },
+      "collect_s": 560.4,
+      "train_s": 26.7,
+      "publish_s": 0.0,
+      "env_step_s": 0.848,
+      "decode_s": 2.757,
+      "sac_update_s": 1.269,
+      "wire_ms": 8.5
+    }
+  ]
+}

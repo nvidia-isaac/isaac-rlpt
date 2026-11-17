@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Adds the DSRL learner's Python deps on top of the g1_factory Arena image so
+# both the batched env-server and the learner run in one container on the GB300.
+#
+# Our repo is NOT installed here — it is bind-mounted at runtime and reached via
+# PYTHONPATH, so code and the WBC patch stay live. Only the extra deps are baked
+# in. torch and numpy are pinned to the base image's exact builds so no
+# dependency swaps them (the GB300 needs the cu130 torch; Isaac Sim ships
+# numpy 2.x and a downgrade would break it).
+#
+# gr00t is installed --no-deps in the base image, so its runtime deps that the
+# base lacks are added here, pinned to the versions gr00t declares. Skipped on
+# purpose: flash-attn (optional — the base image's gr00t eval runs without it;
+# sm_100 needs a long source build), tensorrt (inference optimization only),
+# torchcodec/decord (offline video decoding; no aarch64 build matching this
+# torch — online training reads live sim frames and never touches them).
+ARG BASE_IMAGE=g1_factory:latest
+FROM ${BASE_IMAGE}
+
+USER root
+RUN TORCH_VER=$(/isaac-sim/python.sh -c "import torch; print(torch.__version__.split('+')[0])") && \
+    NUMPY_VER=$(/isaac-sim/python.sh -c "import numpy; print(numpy.__version__)") && \
+    echo "pinning torch==${TORCH_VER} numpy==${NUMPY_VER}" && \
+    printf 'torch==%s\nnumpy==%s\n' "${TORCH_VER}" "${NUMPY_VER}" > /tmp/learner_constraints.txt && \
+    /isaac-sim/python.sh -m pip install -c /tmp/learner_constraints.txt \
+      hydra-core omegaconf loguru rich wandb opencv-python-headless \
+      tqdm Pillow pandas peft "transformers>=4.57.3,<5" \
+      "tyro==0.9.17" dm-tree "diffusers==0.35.1" "albumentations==1.4.18" \
+      "datasets==3.6.0" "jsonlines==4.0.0" "lmdb==1.7.5" && \
+    /isaac-sim/python.sh -c "import hydra, omegaconf, loguru, wandb, peft, transformers; \
+import torch, numpy, tyro, tree, diffusers; \
+import gr00t.configs.data.data_config; \
+import gr00t.model.gr00t_n1d7.gr00t_n1d7; \
+print('learner deps OK — torch', torch.__version__, 'numpy', numpy.__version__, \
+'transformers', transformers.__version__)"

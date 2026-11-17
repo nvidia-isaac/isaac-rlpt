@@ -1,0 +1,19 @@
+# Other repositories this workflow depends on, pinned by commit. Each frozen policy brings its
+# own model stack; only the policy you steer needs installing. The guide checks out each commit.
+externals:
+  - name: LIBERO
+    url: https://github.com/Lifelong-Robot-Learning/LIBERO
+    commit: 8f1084e3132a39270c3a13ebe37270a43ece2a01
+    purpose: the benchmark (tasks, assets, fixed initial states); the revision the repository's LIBERO jobs check out
+  - name: Isaac-GR00T
+    url: https://github.com/NVIDIA/Isaac-GR00T
+    commit: 51d4c89f72fda44cbf77285c6a8114b52676b8a1
+    purpose: the GR00T N1.7 model stack behind base_model=gr00t, installed with --no-deps; the revision the LIBERO-Spatial runs validated
+  - name: dsrl_openpi
+    url: https://github.com/jesbu1/dsrl_openpi
+    commit: b0e3cfbfb1fb46622b4d499fbeeada95d247f4a4
+    purpose: the openpi fork whose Policy.infer accepts injected flow noise, behind base_model=pi0; its default-branch head, unchanged since before the pi0 rows in results/results.json were measured
+  - name: dreamzero
+    url: https://github.com/dreamzero0/dreamzero
+    commit: ab790c198fbce33503358efbbd4187ce9a89adf3
+    purpose: the DreamZero world-action model behind base_model=dreamzero_local; the revision its sampler patch was verified against

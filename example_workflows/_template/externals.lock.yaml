@@ -1,0 +1,8 @@
+# Other repositories this workflow depends on, pinned by commit. Delete this file when there are none.
+# When the results were produced against an unpinned checkout, write `commit: null` and say so in `purpose`
+# rather than inventing a pin; the next validated run records the commit.
+externals:
+  - name: <repository name>
+    url: <public clone URL>
+    commit: <full commit sha>
+    purpose: <one line: what the workflow uses it for>

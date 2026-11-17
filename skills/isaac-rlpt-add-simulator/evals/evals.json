@@ -1,0 +1,98 @@
+{
+  "skill_name": "isaac-rlpt-add-simulator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have a pip-installable package my_arm with a Gymnasium env for a 6-DoF arm (state: 12 floats, one 128x128 wrist camera). Get a DSRL dry run passing on it with the mock base model, without editing the repository.",
+      "expected_output": "An entry class in the user's package attached with +simulator.entry, and a dry run ending with 0 errors.",
+      "expectations": [
+        "The run attaches the entry with +simulator.entry=my_arm.<module>:<Class>",
+        "The entry declares observation_spec and action_spec",
+        "The command sets base_model.action_dim, dsrl.noise_dim, base_model.action_horizon and training.chunk_size to the arm's geometry",
+        "The command sets env.max_episode_steps",
+        "The final dry run prints plan.checks with 0 error(s)",
+        "No file under isaac_rl_posttraining/ is modified"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "My dry run fails with: data specs of simulator my_robot and the policy disagree: action: emitted float32[35] x 40 steps vs accepted float32[7]. Fix it.",
+      "expected_output": "The four mock-geometry overrides, and a passing dry run.",
+      "expectations": [
+        "The fix sets base_model.action_dim=7 and dsrl.noise_dim=7",
+        "The fix sets base_model.action_horizon and training.chunk_size to the same chunk length",
+        "The dry run is re-run and ends with 0 error(s)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Promote simulators/_template into an in-tree simulator called toy_arm that resolves with simulator=toy_arm and ships in the wheel.",
+      "expected_output": "Registry entries, a config group, the Hydra search path and pyproject packaging, with tests green.",
+      "expectations": [
+        "_SIMULATOR_ENTRIES and _PROVIDERS gain a toy_arm entry",
+        "simulators/toy_arm/configs/simulator/toy_arm.yaml declares provider, tasks and max_episode_steps",
+        "train.yaml's hydra.searchpath includes pkg://simulators.toy_arm.configs",
+        "pyproject.toml includes simulators.toy_arm* and its configs package-data",
+        "tests/unit/test_repo_hygiene.py and tests/unit/test_simulators.py pass"
+      ]
+    }
+  ],
+  "trigger_evals": [
+    {
+      "query": "how do I plug my own robot simulator into isaac rlpt so I can run DSRL on it?",
+      "should_trigger": true
+    },
+    {
+      "query": "I wrote a gymnasium env for my arm, what do I need to write so the rollout workers can build it?",
+      "should_trigger": true
+    },
+    {
+      "query": "dry run says: no simulator entry is registered for environment 'my_robot/reach'. what now?",
+      "should_trigger": true
+    },
+    {
+      "query": "getting 'data specs of simulator my_robot and the policy disagree: action: emitted float32[35] x 40 steps vs accepted float32[7]' with base_model=mock",
+      "should_trigger": true
+    },
+    {
+      "query": "my simulator has two cameras, wrist and front, how do I tell RLPT which observation keys are images?",
+      "should_trigger": true
+    },
+    {
+      "query": "I want to drive a real robot through the env server transport instead of a simulator, how should the bridge look?",
+      "should_trigger": true
+    },
+    {
+      "query": "add a mujoco task suite as a new simulator under simulators/ with its own config group",
+      "should_trigger": true
+    },
+    {
+      "query": "run the G1 Factory DrillLift DSRL training on GPU 2",
+      "should_trigger": false
+    },
+    {
+      "query": "evaluate the released PushButton checkpoint on LIBERO for 100 episodes",
+      "should_trigger": false
+    },
+    {
+      "query": "add a new RL algorithm that edits the decoded action chunk",
+      "should_trigger": false
+    },
+    {
+      "query": "wrap OpenVLA as a new base model so DSRL can steer it",
+      "should_trigger": false
+    },
+    {
+      "query": "why did my DSRL run's success rate collapse after 45k steps?",
+      "should_trigger": false
+    },
+    {
+      "query": "build the docs site locally",
+      "should_trigger": false
+    },
+    {
+      "query": "what does dsrl.noise_action_bound do?",
+      "should_trigger": false
+    }
+  ]
+}

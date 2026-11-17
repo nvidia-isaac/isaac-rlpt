@@ -1,0 +1,14 @@
+externals:
+  - name: video_to_data
+    url: https://github.com/nvidia-isaac/video_to_data.git
+    tag: v0.4.0
+    commit: 33129dd0f2d2dcfd1164d43fd076542660756ed2
+    purpose: Released V2D simulator with tiled Vega wrist cameras
+  - name: Isaac-GR00T
+    url: https://github.com/NVIDIA/Isaac-GR00T.git
+    commit: ab88b50c718f6528e1df9dcbaf75865d1b604760
+    purpose: Frozen GR00T-N1.7 runtime packaged in the Docker image
+  - name: tissue-box-base-checkpoint
+    url: https://huggingface.co/nvidia/video-to-data-GR00T-N1.7-finetuned-tissue-box-lift
+    commit: e3ad7eb8dcde2e667a8b5ef9c46d1c66aa0dc9aa
+    purpose: Complete 58-D J0_N16 absolute-joint checkpoint

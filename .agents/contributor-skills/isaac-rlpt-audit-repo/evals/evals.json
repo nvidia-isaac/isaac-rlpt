@@ -1,0 +1,41 @@
+{
+  "skill_name": "isaac-rlpt-audit-repo",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Audit the repo for release readiness and give me the HTML report.",
+      "expected_output": "Guardrail tests run, findings JSON written, audit_report.html rendered.",
+      "expectations": [
+        "The CPU release gate or the three guardrail tests were run",
+        "A findings JSON validated by scripts/render_report.py was written",
+        "audit_report.html exists and contains a grade per dimension"
+      ]
+    }
+  ],
+  "trigger_evals": [
+    {
+      "query": "audit the repo before we open-source it",
+      "should_trigger": true
+    },
+    {
+      "query": "is this repo ready for the release PR? grade it against AGENTS.md",
+      "should_trigger": true
+    },
+    {
+      "query": "run a release-readiness audit and render the report",
+      "should_trigger": true
+    },
+    {
+      "query": "review my last commit",
+      "should_trigger": false
+    },
+    {
+      "query": "add a simulator for my robot",
+      "should_trigger": false
+    },
+    {
+      "query": "run the CPU test suite",
+      "should_trigger": false
+    }
+  ]
+}

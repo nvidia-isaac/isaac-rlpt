@@ -1,0 +1,19 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* Site-wide tweaks on top of nvidia-sphinx-theme (which builds on pydata-sphinx-theme).
+   Keep this file short: anything longer belongs in a theme. */
+
+/* Many pages are wide option tables; the default 88rem column wraps them hard. */
+.bd-page-width {
+  max-width: 96rem;
+}
+
+/* Table cells here hold sentences, not single words: align them at the top so a long
+   cell does not push its neighbours down the middle of the row. */
+table.docutils td,
+table.docutils th {
+  vertical-align: top;
+}

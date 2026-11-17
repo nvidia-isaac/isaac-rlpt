@@ -1,0 +1,10 @@
+# Other repositories this workflow depends on, pinned by commit.
+externals:
+  - name: IsaacLab
+    url: https://github.com/isaac-sim/IsaacLab
+    commit: b770aab7ac986123a94d0615413039608e76927b   # release/3.0.0 branch
+    purpose: the simulator, the task registry and the train.py / play.py entry points the module plugs into
+  - name: Isaac-GR00T
+    url: https://github.com/NVIDIA/Isaac-GR00T
+    commit: 4af2b622892f7dcb5aae5a3fb70bcb02dc217b96
+    purpose: the GR00T N1.5 model code the policy loads (the commit Isaac Lab 3.0 pins; setup_env.sh checks it out)

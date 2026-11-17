@@ -1,0 +1,18 @@
+# Mock base model: the in-tree deterministic BaseModelPolicy used by the contract
+# tests. Selecting it runs the full DSRL harness without any model stack or
+# GPU (useful for pipe-cleaning the loop). The defaults mirror the canonical
+# latent geometry: a 40-step chunk of 35-dim actions.
+
+defaults:
+  - base_base_model
+  - _self_
+
+name: mock
+ckpt: null     
+bc_ckpt: null
+dataset_dir: null
+multitask_dirs: null
+task_dir: null
+server_url: null
+action_horizon: 40
+action_dim: 35

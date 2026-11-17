@@ -1,0 +1,16 @@
+# Other repositories this workflow depends on, pinned by commit. The measurements were produced
+# against the G1 Factory stack this tree assembles: G1 Factory, which carries the G1 tasks, with
+# its IsaacLab-Arena and Isaac-GR00T submodules.
+externals:
+  - name: G1 Factory (the nine G1 locomanipulation tasks)
+    url: https://github.com/NVlabs/G1-Factory
+    commit: a9c20e7ba9b2b8136868cb8ad3d0601c1b9249ed
+    purpose: the nine LM* tasks, their closed-loop configs and the container the station's env server runs in (Isaac Sim 6.0.1, Isaac Lab 3.0); the G1 Factory workflow runs the same tasks on Isaac Sim 6.2 (../g1_arena_posttraining/externals.lock.yaml)
+  - name: IsaacLab-Arena
+    url: https://github.com/isaac-sim/IsaacLab-Arena
+    commit: c5826c87aa181442328c2c74c49f9e551b5c3d8c
+    purpose: the Arena environments and the G1 whole-body controller (submodule of G1 Factory; the per-environment WBC patch in simulators/g1_arena/patches/ applies on top)
+  - name: Isaac-GR00T
+    url: https://github.com/NVIDIA/Isaac-GR00T
+    commit: 9c7e746b2cd37a810070a98ef41d290a07e806c2
+    purpose: the GR00T-N1.7 model code the frozen base policy runs (submodule of G1 Factory)

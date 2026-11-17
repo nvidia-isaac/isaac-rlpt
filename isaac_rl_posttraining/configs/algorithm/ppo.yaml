@@ -1,0 +1,119 @@
+# @package _global_
+# PPO fine-tuning of a GR00T N1.5 checkpoint on an Isaac Lab task: RLinf's stack-cube recipe
+# (RLinf: examples/embodiment/config/isaaclab_franka_stack_cube_ppo_gr00t.yaml) over the runtime
+# layer. Selecting the algorithm also pins its simulator, runtime and base model; `ppo:` holds the
+# update and the schedule, `learner:` / `runtime:` / `training:` the placement. Batch sizes are
+# global: each learner rank trains on ppo.global_batch_size / placement.learner.ranks.
+#   python scripts/train.py algorithm=ppo base_model.ckpt=<checkpoint dir>
+# Another trainable base model swaps in through the base model group (base_model=gr00t_n17, base_model=pi0 with
+# their own required fields; docs/ppo.md).
+# The placement is one 8-GPU node: placement.learner.ranks=4 FSDP learner ranks on GPUs 0-3 and four
+# rollout workers (one Isaac Lab simulation of 16 scenes and one model copy each) on GPUs 4-7.
+# One GPU (learner and a single worker of 16 scenes in the same process):
+#   ... runtime=native placement.learner.ranks=1 placement.envs.workers=1 training.num_envs=16
+defaults:
+  - /ppo: base_ppo
+  - override /simulator: isaaclab_franka_stack
+  - override /runtime: rlinf
+  - override /base_model: gr00t_n15
+
+algorithm:
+  name: ppo
+
+env:
+  # The episode cap is the task's simulator.max_episode_steps; the workers run it as whole
+  # action chunks (448 = 28 chunks of the checkpoint's 16-step horizon).
+  env_name: isaaclab/Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-v0
+
+training:
+  num_envs: 64                  # scenes over all rollout workers (placement.envs.workers x scenes per simulation)
+
+placement:
+  learner:
+    ranks: 4                    # FSDP learner ranks (runtime=rlinf); 0 = evaluate without a learner
+  envs:
+    workers: 4                  # one Isaac Lab simulation (and one model copy) per worker GPU
+  policy:
+    mode: local                 # every rollout worker keeps its own model copy
+
+runtime:
+  native:
+    learner_mixed_precision: bf16   # the FSDP learner ranks when runtime=native runs several processes
+  rlinf:
+    learner_mixed_precision: bf16
+    learner_seed: ${training.seed}
+    shutdown_ray_on_close: true
+    serialize_specs_by_value: false
+
+base_model:
+  ckpt: null                    # required: the SFT checkpoint directory (HuggingFace layout)
+  data_config: simulators.isaaclab.gr00t_data_configs:IsaacLabFrankaDataConfig
+  embodiment_tag: isaaclab_franka
+  denoising_steps: 4            # flow Euler steps per decode (one of them is the stochastic step)
+  action_horizon: 16            # executed steps per decision (the checkpoint's action window; 448 / 16 = 28 chunks)
+
+logging:
+  wandb_entity: nvidia-isaac
+  wandb_prefix: ppo
+  wandb_name: gr00t_ppo
+
+ppo:
+  iterations: 1000
+  eval_only: false                       # true = evaluate once and exit (no training)
+  resume_from: null                      # iteration_<n> checkpoint directory to continue from
+  episodes_per_environment: 2            # episodes every scene plays per iteration
+  eval_episodes_per_environment: 1       # deterministic-decode episodes per scene and evaluation (0 = off)
+  eval_every: 10
+  checkpoint_every: 20
+  checkpoint_retention: best_last_final  # keeps the best-evaluated, the newest and the final checkpoint; 'all' keeps every one
+  learning_rate: 1.0e-5
+  value_learning_rate: 2.0e-5
+  optimizer: adamw
+  adam_betas: [0.9, 0.95]
+  optimizer_eps: 1.0e-8
+  weight_decay: 0.01
+  clip_ratio: 0.2
+  value_clip: 0.2
+  value_loss: huber
+  huber_delta: 10.0
+  value_loss_coef: 1.0
+  entropy_coef: 0.0
+  update_epochs: 3
+  global_batch_size: 512
+  micro_batch_size: 32                   # gradient-accumulation slice of the rank minibatch
+  max_grad_norm: 1.0
+  target_kl: null
+  gamma: 0.99                            # per action chunk (see discount_per)
+  gae_lambda: 0.95
+  # RLinf's chunk-level convention: one discount per chunk, and the time limit ends an
+  # episode without bootstrapping.
+  discount_per: decision
+  bootstrap_at_time_limit: false
+  eval_seed: 100000                      # reset seed replayed by every evaluation
+  # The Isaac Lab flow-SDE workers evaluate on the training workers with a deterministic decode.
+  isolate_evaluation_workers: false
+  deterministic_kernels: true
+  sample_evaluation_actions: false
+  # Flow-SDE exploration: one of the base_model.denoising_steps Euler steps of every decision is
+  # made stochastic with this transition-noise scale.
+  noise_level: 0.5
+  cache_features: false                  # rollout workers ship the frozen backbone's outputs instead of pixels
+  frozen_submodules: null                # null = the base model's own frozen parts (N1.5: model.backbone); a list overrides them
+  # ------------------------------------------------------------------
+  # Demonstration co-training (isaac_rl_posttraining/training/cotrain.py)
+  # ------------------------------------------------------------------
+  # Adds a supervised term over the ORIGINAL demonstrations to every RL update:
+  #     L = L_PPO + cotrain_beta * L_BC
+  # It anchors the policy to the distribution the real robot was taught on. A
+  # run that raises simulated return by exploiting simulator-specific behaviour
+  # drifts away from that distribution; the anchor is external and fixed,
+  # unlike self-imitation from the agent's own successes, which reinforces such
+  # drift rather than opposing it.
+  #
+  # Requires a base model that scores demonstrations (GR00T N1.5 and N1.7 do);
+  # enabling it for a model that does not raises at learner construction. The
+  # cameras, the executed action window and the draw order all come from the
+  # checkpoint and the run, not from here.
+  cotrain_beta: 0.0                      # 0 disables co-training and costs nothing
+  cotrain_batch_size: 32                 # demonstrations scored per gradient slice
+  cotrain_dataset_path: null             # LeRobot dataset directory; required when beta > 0

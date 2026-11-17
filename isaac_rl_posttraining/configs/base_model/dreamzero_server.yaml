@@ -1,0 +1,23 @@
+# DreamZero served base model (experimental): native inference against a running
+# DreamZero policy server; no model weights load in this process.
+#
+# NATIVE-ONLY: supports_steering is false, so only eval-only native runs work
+# (training.num_rollouts=0 eval.eval_base=true). Requires the "dreamzero"
+# extra (websockets + msgpack). The handshake does not advertise the action
+# geometry; action_horizon/action_dim must match the served checkpoint
+# (24 x 8 for DreamZero-DROID: 7 joints + 1 gripper). For DSRL steering use
+# base_model=dreamzero_local, which loads the model in-process.
+
+defaults:
+  - base_base_model
+  - _self_
+
+name: dreamzero_server
+ckpt: null     
+bc_ckpt: null
+dataset_dir: null
+multitask_dirs: null
+task_dir: null
+server_url: ws://127.0.0.1:8000
+action_horizon: 24
+action_dim: 8

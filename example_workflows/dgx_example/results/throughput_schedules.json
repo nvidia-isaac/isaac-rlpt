@@ -1,0 +1,225 @@
+{
+  "workflow": "dgx_example",
+  "date": "2026-09-19 (sync rows) and 2026-09-20 (overlapped rows)",
+  "runtime": "the runtime layer's episode-synchronous batched worker on the DGX Station (GB300 + RTX Pro 6000): the split at N = 256 with the SAC burst sized to the collection round, on the sync and the overlapped schedule, with the rollout worker on the native and on the RLinf runtime; the overlapped rows were measured on 2026-09-20, where a round's wall is its own end, stamped where the round ran",
+  "recipe": {
+    "task": "DrillLift",
+    "env_steps_per_env": 1350,
+    "min_env_steps": 6400,
+    "action_exec_len": 8,
+    "max_updates_per_burst": 310,
+    "sac_batch_size": 64,
+    "image_shortest_edge": 256,
+    "decode_whole_batch": true,
+    "evaluation": false
+  },
+  "gpus": {
+    "gb300": {
+      "label": "GB300",
+      "host": "GB300 DGX Station (Grace CPU, aarch64)"
+    },
+    "rtx_pro_6000": {
+      "label": "RTX Pro 6000 Blackwell (96 GB)",
+      "host": "GB300 DGX Station (Grace CPU, aarch64)"
+    }
+  },
+  "layouts": {
+    "dgx_station": {
+      "label": "GB300 DGX Station (both GPUs)",
+      "shape": "split",
+      "simulator_gpu": "rtx_pro_6000",
+      "learner_gpu": "gb300",
+      "color": "#76B900",
+      "rollout_runtime": "native",
+      "schedule": "sync",
+      "simulator_servers": 1
+    },
+    "dgx_station_overlapped": {
+      "label": "GB300 DGX Station (both GPUs), overlapped schedule",
+      "shape": "split",
+      "simulator_gpu": "rtx_pro_6000",
+      "learner_gpu": "gb300",
+      "color": "#FF8C42",
+      "rollout_runtime": "native",
+      "schedule": "overlapped",
+      "simulator_servers": 1
+    },
+    "dgx_station_rlinf": {
+      "label": "GB300 DGX Station (both GPUs), RLinf runtime",
+      "shape": "split",
+      "simulator_gpu": "rtx_pro_6000",
+      "learner_gpu": "gb300",
+      "color": "#A4D65E",
+      "rollout_runtime": "rlinf",
+      "schedule": "sync",
+      "simulator_servers": 1
+    },
+    "dgx_station_rlinf_overlapped": {
+      "label": "GB300 DGX Station (both GPUs), RLinf runtime, overlapped schedule",
+      "shape": "split",
+      "simulator_gpu": "rtx_pro_6000",
+      "learner_gpu": "gb300",
+      "color": "#C77DFF",
+      "rollout_runtime": "rlinf",
+      "schedule": "overlapped",
+      "simulator_servers": 1
+    },
+    "dgx_station_rlinf_overlapped_2srv": {
+      "label": "GB300 DGX Station (both GPUs), RLinf runtime, overlapped schedule, two servers",
+      "shape": "split",
+      "simulator_gpu": "rtx_pro_6000",
+      "learner_gpu": "gb300",
+      "color": "#FFB000",
+      "rollout_runtime": "rlinf",
+      "schedule": "overlapped",
+      "simulator_servers": 2
+    }
+  },
+  "rows": [
+    {
+      "simulator": "arena",
+      "layout": "dgx_station",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 258.7,
+        "std": 4.6,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 24.3,
+        "simulator": 27.4
+      },
+      "wandb_run": "3ypmy5cm",
+      "note": "the DGX Station, 2026-09-19; the burst sized to the round",
+      "iteration_env_steps_per_s": {
+        "mean": 122.9,
+        "std": 1.0,
+        "cycles": 3
+      },
+      "collect_s": 389.3,
+      "train_s": 428.7,
+      "publish_s": 0.0,
+      "env_step_s": 0.541,
+      "decode_s": 2.291,
+      "sac_update_s": 1.33,
+      "wire_ms": 8.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_overlapped",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 225.4,
+        "std": 1.1,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 23.6,
+        "simulator": 28.2
+      },
+      "wandb_run": "pqgowzyu",
+      "note": "the DGX Station, 2026-09-20 (the round's own end stamped where it ran); the burst sized to the round",
+      "iteration_env_steps_per_s": {
+        "mean": 222.0,
+        "std": 16.0,
+        "cycles": 3
+      },
+      "collect_s": 451.5,
+      "train_s": 491.9,
+      "publish_s": 0.0,
+      "env_step_s": 0.553,
+      "decode_s": 3.126,
+      "sac_update_s": 1.269,
+      "wire_ms": 8.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_rlinf",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 246.1,
+        "std": 0.3,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 30.8,
+        "simulator": 27.4
+      },
+      "wandb_run": "04neqodl",
+      "note": "the DGX Station, 2026-09-19; the burst sized to the round",
+      "iteration_env_steps_per_s": {
+        "mean": 121.1,
+        "std": 0.1,
+        "cycles": 3
+      },
+      "collect_s": 406.5,
+      "train_s": 419.2,
+      "publish_s": 0.0,
+      "env_step_s": 0.541,
+      "decode_s": 2.476,
+      "sac_update_s": 1.288,
+      "wire_ms": 8.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_rlinf_overlapped",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 230.5,
+        "std": 2.0,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 30.7,
+        "simulator": 28.1
+      },
+      "wandb_run": "rn3lll10",
+      "note": "the DGX Station, 2026-09-20 (the round's own end stamped where it ran); the burst sized to the round",
+      "iteration_env_steps_per_s": {
+        "mean": 233.7,
+        "std": 5.4,
+        "cycles": 3
+      },
+      "collect_s": 444.6,
+      "train_s": 423.5,
+      "publish_s": 17.7,
+      "env_step_s": 0.549,
+      "decode_s": 3.131,
+      "sac_update_s": 1.289,
+      "wire_ms": 8.5
+    },
+    {
+      "simulator": "arena",
+      "layout": "dgx_station_rlinf_overlapped_2srv",
+      "num_envs": 256,
+      "status": "finished",
+      "env_steps_per_s": {
+        "mean": 332.2,
+        "std": 10.5,
+        "cycles": 3
+      },
+      "peak_gib": {
+        "learner": 38.9,
+        "simulator": 38.5
+      },
+      "wandb_run": "91ec0c8g",
+      "note": "the DGX Station, 2026-09-20 (the round's own end stamped where it ran); the burst sized to the one-server round; two Arena servers of 128 environments, one RLinf-placed rollout actor each",
+      "iteration_env_steps_per_s": {
+        "mean": 248.9,
+        "std": 6.1,
+        "cycles": 3
+      },
+      "collect_s": 316.7,
+      "train_s": 417.6,
+      "publish_s": 0.0,
+      "env_step_s": 0.452,
+      "decode_s": 1.81,
+      "sac_update_s": 1.258,
+      "wire_ms": 5.0
+    }
+  ]
+}

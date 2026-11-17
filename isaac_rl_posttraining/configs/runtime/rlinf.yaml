@@ -1,0 +1,29 @@
+defaults:
+  - base_runtime
+  - _self_
+
+name: rlinf
+
+rlinf:
+  num_nodes: 1
+  device: gpu
+  node_ranks: null
+  # The DSRL controller owns GPU 0 for the learner and evaluation policy.
+  # Learner ranks occupy [0, placement.learner.ranks); policy servers start next.
+  first_accelerator: ${placement.learner.ranks}
+  learner_first_accelerator: 0
+  # Learner ranks and policy servers refuse a card another group holds; rollout workers go where
+  # runtimes/rlinf/layout.py puts them (sharing cards when there are fewer cards than workers).
+  exclusive_accelerators: true
+  # true runs every GPU rollout worker of a group on first_accelerator instead of one card each:
+  # several batched workers, one per simulator server, sharing the learner's card.
+  rollout_workers_share_accelerator: false
+  learner_mixed_precision: none
+  learner_seed: 0
+  # Policy serving, servers and batching are placement.policy.* (mode, replicas, max_batch, max_wait_ms).
+  collect_policy_server_metrics: auto   # policy_service/* metrics (auto: when the runtime serves the policy)
+  # Serve evaluation requests one at a time so batching cannot change a score.
+  serve_evaluation_unbatched: true
+  policy_request_timeout_seconds: 600   # how long a rollout worker waits for its policy server
+  shutdown_ray_on_close: false
+  serialize_specs_by_value: true

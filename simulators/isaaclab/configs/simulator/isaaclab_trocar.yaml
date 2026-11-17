@@ -1,0 +1,46 @@
+# IsaacLab 3.0 trocar assembly: Unitree G1 29-DoF + Dex3 hands, GR00T-native
+# observation keys, 28-dim joint-position actions. Install and wiring:
+# simulators/isaaclab/README.md.
+#
+# The "isaaclab" provider steps IsaacLab in-process (no env server). Isaac
+# Sim hosts one simulation per process, so training.num_envs > 1 clones the
+# scene inside it and the train/eval wrappers share one underlying environment.
+
+provider: isaaclab
+
+# Registered task ids: the training variant randomizes the tray yaw on every
+# reset; the -Eval-v0 variant fixes a deterministic per-env yaw.
+tasks:
+  - Isaac-Assemble-Trocar-G129-Dex3-v0
+  - Isaac-Assemble-Trocar-G129-Dex3-Eval-v0
+
+# Per-task client-side episode caps in control steps (50 Hz). 1000 equals
+# IsaacLab's own horizon (episode_length_s 20, sim dt 1/200, decimation 4);
+# select one with env.max_episode_steps=${simulator.max_episode_steps.<task>}.
+max_episode_steps:
+  Isaac-Assemble-Trocar-G129-Dex3-v0: 1000
+  Isaac-Assemble-Trocar-G129-Dex3-Eval-v0: 1000
+
+# Client-side environment geometry (the learner reads these).
+action_dim: 28          # left arm 7 + right arm 7 + left hand 7 + right hand 7
+image_resolution: 224   # the task's TiledCamera resolution (no resize)
+
+# Simulator -> model mapping, mirroring the isaaclab: block of IsaacLab's
+# isaaclab_ppo_gr00t_assemble_trocar.yaml (RLinf recipe). It is the default
+# baked into simulators/isaaclab/env.py (TROCAR_GR00T_MAPPING; the tests pin
+# the two equal); another IsaacLab task needs only its own block.
+gr00t_mapping:
+  cameras:                              # GR00T video key -> camera_images term
+    video.room_view: front_camera
+    video.left_wrist_view: left_wrist_camera
+    video.right_wrist_view: right_wrist_camera
+  states:                               # GR00T state key -> policy-group term + [start, stop)
+    state.left_arm: {term: robot_joint_state, slice: [15, 22]}
+    state.right_arm: {term: robot_joint_state, slice: [22, 29]}
+    state.left_hand: {term: robot_dex3_joint_state, slice: [0, 7]}
+    state.right_hand: {term: robot_dex3_joint_state, slice: [7, 14]}
+  action_term: joint_pos                # action term whose joint order the model action follows
+  prefix_pad: 15                        # zeros for the uncontrolled leg/waist joints
+  suffix_pad: 0
+  task_description: "assemble trocar from tray"
+  stage_fn: "isaaclab_tasks.manager_based.manipulation.assemble_trocar.mdp.terminations:get_task_stage"  # optional per-episode progress diagnostic

@@ -1,0 +1,58 @@
+# IsaacLab 3.0 Franka cube stacking (Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-v0):
+# Franka Panda stacks three cubes; table + wrist cameras; 7-dim action = relative
+# end-effector pose delta (6) + binary gripper (1). Layout of RLinf's public
+# SFT checkpoint RLinf/RLinf-Gr00t-SFT-Stack-cube (embodiment tag isaaclab_franka,
+# data config simulators.isaaclab.gr00t_data_configs:IsaacLabFrankaDataConfig).
+# Install and wiring: simulators/isaaclab/README.md.
+#
+# The "isaaclab" provider steps IsaacLab in-process (no env server). Isaac
+# Sim hosts one simulation per process, so training.num_envs > 1 clones the
+# scene inside it.
+
+provider: isaaclab
+
+tasks:
+  - Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-v0
+
+# Episode cap in control steps (20 Hz: sim dt 0.01, decimation 5). 448 is the
+# RLinf stack-cube protocol (28 chunks of 16); IsaacLab's own horizon is 600
+# (episode_length_s 30). Select with env.max_episode_steps=${simulator.max_episode_steps.<task>}.
+max_episode_steps:
+  Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-v0: 448
+
+# Client-side environment geometry (the learner reads these).
+action_dim: 7           # dx dy dz droll dpitch dyaw gripper
+image_resolution: 256   # camera resolution the SFT data was recorded at (set via env_cfg_overrides)
+
+# Simulator -> model mapping, mirroring RLinf's isaaclab_stack_cube observation
+# converter (states = eef position, axis-angle orientation, finger joints) and its
+# action converter (direct 7-dim action, gripper binarized). It is baked into
+# simulators/isaaclab/env.py (FRANKA_STACK_GR00T_MAPPING; the tests pin the two equal).
+gr00t_mapping:
+  cameras:                              # GR00T video key -> camera term (policy group)
+    video.image: table_cam
+    video.wrist_image: wrist_cam
+  states:                               # GR00T state key -> term (+ optional transform) + [start, stop)
+    state.x: {term: eef_pos, slice: [0, 1]}
+    state.y: {term: eef_pos, slice: [1, 2]}
+    state.z: {term: eef_pos, slice: [2, 3]}
+    state.roll: {term: eef_quat, transform: quat_wxyz_to_axis_angle, slice: [0, 1]}
+    state.pitch: {term: eef_quat, transform: quat_wxyz_to_axis_angle, slice: [1, 2]}
+    state.yaw: {term: eef_quat, transform: quat_wxyz_to_axis_angle, slice: [2, 3]}
+    state.gripper: {term: gripper_pos, slice: [0, 2]}
+  action_term: null                     # IK action: bounds come from action_bounds, not joint limits
+  prefix_pad: 0
+  suffix_pad: 0
+  sign_dims: [6]                        # gripper command is sent as its sign
+  action_bounds:                        # the SFT data's action range (metadata min/max)
+    low: [-0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -1.0]
+    high: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1.0]
+  task_description: "Stack the red block on the blue block, then stack the green block on the red block."
+  env_cfg_overrides:                    # dotted env-config paths applied before construction
+    scene.table_cam.height: 256
+    scene.table_cam.width: 256
+    scene.wrist_cam.height: 256
+    scene.wrist_cam.width: 256
+    # the 6.0 asset server keeps the Franka USD under Legacy/ (the Isaac Lab 3.0.0 container's path 404s)
+    scene.robot.spawn.usd_path: "{ISAACLAB_NUCLEUS_DIR}/Robots/FrankaEmika/Legacy/panda_instanceable.usd"
+  stage_terms: [grasp_1, stack_1, grasp_2]   # boolean sub-task terms; stage = how many hold

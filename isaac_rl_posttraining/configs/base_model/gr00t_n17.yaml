@@ -1,0 +1,28 @@
+# GR00T N1.7 base model, named by generation.
+#
+# Steering (DSRL, RFS, SAC-edit) builds the same frozen GR00T base model as
+# `base_model=gr00t` (the validated reference); fine-tuning (`algorithm=ppo`,
+# `iql` or `sft`) selects the N1.7 flow-SDE adapter
+# (policies/gr00t/flow_sde_n17.py) by this name. N1.7 PPO ships the frozen
+# backbone's outputs with every decision (ppo.cache_features=true), because
+# Qwen3-VL's flattened image patches cannot travel per sample.
+
+defaults:
+  - base_base_model
+  - _self_
+
+name: gr00t_n17
+ckpt: null               # REQUIRED: N1.7 checkpoint dir (HF layout)
+backbone_model_name_or_path: null  # optional local/HF override for the checkpoint's VLM backbone
+bc_ckpt: null
+dataset_dir: null        # steering: single-task LeRobot dataset dir (modality + stats)
+multitask_dirs: null
+task_dir: null
+embodiment_tag: null     # REQUIRED for fine-tuning: the baked embodiment the checkpoint is self-describing for
+dataset_adapter: g1_wbc
+task_instruction: null
+data_config: null
+denoising_steps: null    # fine-tuning requires it: flow denoising steps (one of them is the stochastic step)
+server_url: null
+action_horizon: null     # fine-tuning requires it: executed steps per decision (at most the head's horizon)
+action_dim: null

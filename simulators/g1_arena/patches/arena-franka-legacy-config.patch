@@ -1,0 +1,13 @@
+diff --git a/isaaclab_arena_environments/mdp/robot_configs.py b/isaaclab_arena_environments/mdp/robot_configs.py
+index 6a12f8050..0dbc3b1fb 100644
+--- a/isaaclab_arena_environments/mdp/robot_configs.py
++++ b/isaaclab_arena_environments/mdp/robot_configs.py
+@@ -9,7 +9,7 @@
+ from __future__ import annotations
+ 
+ from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
+-from isaaclab_assets.robots.franka import FRANKA_PANDA_HIGH_PD_CFG
++from isaaclab_assets.robots.franka import FRANKA_PANDA_LEGACY_HIGH_PD_CFG as FRANKA_PANDA_HIGH_PD_CFG  # Isaac Lab renamed the legacy arm actuators
+ 
+ _LEGACY_FRANKA_PANDA_USD_PATH = f"{ISAACLAB_NUCLEUS_DIR}/Robots/FrankaEmika/Legacy/panda_instanceable.usd"
+ 

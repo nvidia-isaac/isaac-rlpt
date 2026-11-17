@@ -1,0 +1,84 @@
+# @package _global_
+# Reference-conditioned direct-action SACEdit (on the shared REDQ/SAC critic).
+# Each decision edits one whole decoded chunk, so the per-step latent chunk does not apply.
+
+defaults:
+  - base_sac_edit@algorithm
+  - _self_
+
+training:
+  chunk_size: null
+
+algorithm:
+  name: sac_edit
+  learning_starts: 4000              # env steps before updates start
+  actor_learning_starts: null
+  actor_q_loss_starts: null
+  actor_q_loss_coef: 1.0
+  actor_q_loss_coef_after_step: null
+  actor_q_loss_coef_after_step_value: null
+  actor_learning_stops: null
+  ent_coef: auto
+  target_entropy: 0.0
+  target_update_interval: 1
+  gamma: 0.997
+  tau: 0.125
+  batch_size: 2048
+
+  q_value_min: -5.0                # AdaptiveRewardScaler support fallback (only when
+  q_value_max: 5.0                 # use_adaptive_reward_scaler=true and reward_scaling_g_max is null)
+
+  num_critics: 2
+  n_critics_to_sample: 2
+  critic_target_reduction: min
+  num_critic_updates_per_actor_update: 2
+  critic_reduction: mean
+  num_updates_per_train_step: 1
+  bootstrap_at_truncation: false
+  augment_pixels: false
+  augment_color_jitter: false
+  temperature_loss_type: alpha
+  use_amp: false                   # fp32: mixed precision produced a non-finite actor on G1
+
+  pooled_critic_features: false
+  train_critic_with_entropy: true
+  train_actor_with_entropy: true
+  train_actor_with_kl_divergence: false
+  train_actor_with_prior_kl: false
+  actor_behavior_kl_coef: 0.0
+  actor_behavior_anchor_step: null
+  actor_behavior_kl_starts: null
+
+  actor_optimizer_lr: 3.0e-4
+  actor_optimizer_betas: [0.9, 0.95]
+  actor_optimizer_eps: 1.0e-8
+  actor_optimizer_weight_decay: 0.001
+  critic_optimizer_lr: 3.0e-4
+  critic_optimizer_betas: [0.9, 0.95]
+  critic_optimizer_eps: 1.0e-8
+  critic_optimizer_weight_decay: 0.001
+  clip_grad_norm: 1.0
+
+  ent_coef_lr: 3.0e-4
+  latent_prior_kl_coef: 0.0
+  latent_prior_std: 1.0
+  expert_bc_coef: 0.0
+  expert_bc_loss_type: nll
+  online_success_bc_coef: 0.0
+  online_success_bc_loss_type: nll
+
+  reference_action_key: reference_action
+  reference_action_dropout: 0.0    # must stay 0 with a bounded or reference-centered edit
+  reference_action_l2_coef: 0.1
+  normalize_actor_q_loss: true
+  alpha_weight_decay: 0.01
+  # Optional extras kept for future work; all off in the validated recipe.
+  learner_update_anchors: null
+  learner_update_batch_size: 1
+  use_adaptive_reward_scaler: false
+  reward_scaling_g_max: null
+  reward_scaling_epsilon: 1.0e-8
+  normalize_input: false
+  input_normalizer_key: state
+  input_normalizer_dim: 0
+  input_normalizer_clip: 5.0

@@ -1,0 +1,47 @@
+# LIBERO-10 (a.k.a. LIBERO-Long) suite: the ten long-horizon two-stage
+# tasks drawn from LIBERO-100. Install: simulators/libero/README.md;
+# protocol and reference numbers: simulators/libero/README.md.
+#
+# The "libero" provider steps MuJoCo/robosuite in-process (no env server).
+
+provider: libero
+suite: libero_10
+
+# Suite-wide episode cap: LIBERO's own evaluation harness caps every suite
+# at 600 steps (libero/configs/eval/default.yaml). LIBERO episodes end only
+# on success, so the cap ends failures as truncations.
+max_episode_steps: 600
+
+# Camera resolution: 256 matches the public LeRobot conversions of the
+# LIBERO demonstrations; use 128 to match the original HDF5 datasets.
+image_size: 256
+camera_name: agentview
+
+# GR00T-N1.7-LIBERO evaluation protocol (the reference evaluation in the
+# Isaac-GR00T repository, examples/LIBERO): two 256x256 cameras (scene +
+# wrist), the 8-dim end-effector state, a 720-step episode cap, and 8
+# actions executed per inference call. The environment side is
+# make_libero_gr00t_env (envs/libero_gr00t.py); example_workflows/libero_posttraining/scripts/eval.py and
+# the DSRL configs consume these values.
+gr00t_eval:
+  max_episode_steps: 720
+  image_size: 256
+  action_horizon: 16
+  n_action_steps: 8
+
+# Task enumeration in the suite's canonical order (task_order_index=0),
+# from libero.libero.benchmark.get_benchmark("libero_10"). Pinned here so
+# configs resolve without the LIBERO stack installed;
+# simulators/libero/tests/test_libero_env.py cross-checks the list against the real
+# benchmark when that stack is importable.
+tasks:
+  - LIVING_ROOM_SCENE2_put_both_the_alphabet_soup_and_the_tomato_sauce_in_the_basket
+  - LIVING_ROOM_SCENE2_put_both_the_cream_cheese_box_and_the_butter_in_the_basket
+  - KITCHEN_SCENE3_turn_on_the_stove_and_put_the_moka_pot_on_it
+  - KITCHEN_SCENE4_put_the_black_bowl_in_the_bottom_drawer_of_the_cabinet_and_close_it
+  - LIVING_ROOM_SCENE5_put_the_white_mug_on_the_left_plate_and_put_the_yellow_and_white_mug_on_the_right_plate
+  - STUDY_SCENE1_pick_up_the_book_and_place_it_in_the_back_compartment_of_the_caddy
+  - LIVING_ROOM_SCENE6_put_the_white_mug_on_the_plate_and_put_the_chocolate_pudding_to_the_right_of_the_plate
+  - LIVING_ROOM_SCENE1_put_both_the_alphabet_soup_and_the_cream_cheese_box_in_the_basket
+  - KITCHEN_SCENE8_put_both_moka_pots_on_the_stove
+  - KITCHEN_SCENE6_put_the_yellow_and_white_mug_in_the_microwave_and_close_it

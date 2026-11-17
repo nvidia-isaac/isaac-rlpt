@@ -1,0 +1,51 @@
+{
+  "skill_name": "isaac-rlpt-add-algorithm",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add an algorithm dsrl_td3 that reuses the SAC core in the latent action space with a deterministic actor flag, selectable as algorithm=dsrl_td3, with a passing G1 Factory mock dry run.",
+      "expected_output": "An algorithms/dsrl_td3/ package with a config dataclass, an AlgorithmSpec, a config group and tests.",
+      "expectations": [
+        "algorithms/dsrl_td3/config.py defines a config dataclass deriving from SACConfig or BaseAlgorithmConfig",
+        "registry.py registers an AlgorithmSpec with loop off_policy and action_space latent",
+        "configs/algorithm/dsrl_td3.yaml lists base_dsrl_td3 first and declares name: dsrl_td3",
+        "No cs.store call is added",
+        "The dry run with algorithm=dsrl_td3 base_model=mock simulator=g1_arena ends with 0 error(s)"
+      ]
+    }
+  ],
+  "trigger_evals": [
+    {
+      "query": "add a new RL method that steers the latent like DSRL but uses TD3",
+      "should_trigger": true
+    },
+    {
+      "query": "how do I register a new algorithm so algorithm=myalgo works?",
+      "should_trigger": true
+    },
+    {
+      "query": "write an AlgorithmSpec for an offline method that trains the full chunk",
+      "should_trigger": true
+    },
+    {
+      "query": "my new algorithm's yaml fails the dry run with an undeclared key, what's wrong?",
+      "should_trigger": true
+    },
+    {
+      "query": "set the DSRL entropy coefficient to 0.05",
+      "should_trigger": false
+    },
+    {
+      "query": "add a new simulator for my robot",
+      "should_trigger": false
+    },
+    {
+      "query": "add OpenVLA as a base model",
+      "should_trigger": false
+    },
+    {
+      "query": "compare RFS and SAC-edit results on G1",
+      "should_trigger": false
+    }
+  ]
+}

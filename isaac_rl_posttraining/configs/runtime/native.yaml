@@ -1,0 +1,28 @@
+defaults:
+  - base_runtime
+  - _self_
+
+name: native
+
+native:
+  device: auto
+  # Policy serving and its batching are placement.policy.* (mode, max_batch, max_wait_ms).
+  serve_evaluation_unbatched: true      # evaluation requests are never batched across workers
+  concurrent_collection: auto           # workers collect on threads so a served policy batches them (auto: served, several workers)
+  collect_policy_server_metrics: auto   # policy_service/* metrics (auto: when the placement serves the policy)
+  # Several processes (Ray actors; the ray extra). auto: when the placement asks for several learner
+  # ranks, several policy-server replicas or GPUs for them, GPUs for the rollout workers, or nodes.
+  processes: auto                       # auto | single | ray
+  num_nodes: 1                          # Ray nodes the placement plans onto (ray start on each)
+  ray_address: null                     # null: join the running cluster, else start a local one
+  startup_timeout_seconds: 900          # starting an actor or the learner process group
+  node_join_timeout_seconds: 120        # every plan node joining the Ray cluster
+  control_timeout_seconds: 300          # a weight update, learner hook or close
+  call_timeout_seconds: null            # an update or checkpoint (a dead actor fails at once)
+  # A collection is bounded by runtime.rollout_timeout_seconds (default 1800) per requested episode, on every runtime.
+  policy_request_timeout_seconds: 600   # one rollout worker's call to a policy server
+  collective_timeout_seconds: 1800      # one collective among learner ranks
+  learner_mixed_precision: none         # none | bf16 (FSDP learner ranks)
+  learner_seed: ${training.seed}
+  seed: ${training.seed}                # seeds each actor's generators from its role and index
+  serialize_specs_by_value: true

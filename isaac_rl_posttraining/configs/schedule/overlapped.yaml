@@ -1,0 +1,2 @@
+# Collect the next round while the learner trains on the last one (data one publish old).
+kind: overlapped

@@ -1,0 +1,212 @@
+# The one training config: `python scripts/train.py algorithm=<name> [overrides]`.
+#
+# `algorithm` selects the method (dsrl_sac | rfs | sac_edit steer or edit a FROZEN policy with an
+# off-policy learner; ppo fine-tunes GR00T's action head with flow-SDE PPO; dsrl_ppo trains
+# the steering actor with PPO; iql and sft fine-tune the base model from demonstrations), `simulator`
+# the task family, `base_model` the policy and
+# `runtime` where the rollouts run. The values below are the validated G1 Factory + GR00T DSRL
+# recipe; an on-policy algorithm pins its own simulator, runtime and base model
+# (configs/algorithm/ppo.yaml).
+#
+# G1 Factory needs two arena env-server instances (train + eval; the server is single-client),
+# addressed via ARENA_SERVER_URL / ARENA_EVAL_SERVER_URL (see example_workflows/g1_arena_posttraining/scripts/train.sh
+# and example_workflows/g1_arena_posttraining/scripts/eval.sh):
+#   ARENA_SERVER_URL=tcp://127.0.0.1:<train_port> ARENA_EVAL_SERVER_URL=tcp://127.0.0.1:<eval_port> \
+#   ARENA_IMAGE_RESOLUTION=0 ARENA_ACTION_DIM=35 \
+#     scripts/train.py algorithm=dsrl_sac base_model.ckpt=<ckpt> base_model.dataset_dir=<lerobot task dir>
+defaults:
+  - _self_
+  - schedule: sync              # sync | overlapped | async; see the schedule section below
+  # Simulator group (default g1_arena; override at launch, e.g. simulator=libero_10).
+  # The g1_arena/gr00t values below (env.env_name, dsrl.noise_dim) are
+  # the reference defaults; override the simulator group and the matching base model to run
+  # another sim. noise_dim stays a config field on purpose: gr00t/pi0 only learn
+  # action_dim from the checkpoint at load time (base_model.action_dim is null at compose),
+  # so it cannot be derived from config alone.
+  - simulator: g1_arena
+  - runtime: native             # execution provider; docs/runtimes.md lists them
+  - policy@policy: transformer
+  - value_function@value_function: transformer
+  - base_model: gr00t              # base model (mock|gr00t|pi0|dreamzero_local|dreamzero_server); see docs/base_models.md
+  # Last, so an on-policy algorithm's pins (simulator, runtime, base model, placement) win over the groups above.
+  - algorithm: dsrl_sac         # dsrl_sac | rfs | sac_edit | ppo | dsrl_ppo | iql | sft; see configs/algorithm/
+
+# The per-simulator config groups live with each simulator
+# (simulators/<sim>/configs/simulator/); add them to Hydra's search path so
+# `simulator=g1_arena` / `simulator=libero_10` resolve from there.
+hydra:
+  searchpath:
+    - pkg://simulators.g1_arena.configs
+    - pkg://simulators.libero.configs
+    - pkg://simulators.isaaclab.configs
+    - pkg://simulators.v2d.configs
+
+# When collection and updates happen. The schedule group (configs/schedule/) sets schedule.kind:
+# sync (collect a round, train, publish; the reference recipe) | overlapped (the next round collects
+# during the update, on weights one publish old) | async (rollout workers collect continuously).
+# `schedule=async` and `schedule.kind=async` select the same schedule.
+schedule:
+  max_policy_lag: null          # drop data more than this many weight publishes old (null = the schedule's own)
+  publish_every: null           # async: publish every N learner updates (null = once per training burst)
+
+# Which role runs where; unset values are the planner's (the dry run prints plan.placement.*).
+placement:
+  envs:
+    workers: null               # rollout workers (null = the simulator entry's layout)
+    gpus: null                  # a count or ["node:index", ...]
+  policy:
+    mode: auto                  # local (a copy in every rollout worker) | served (policy servers) | auto
+    replicas: null
+    gpus: null
+    gpus_per_replica: 1
+    max_batch: null             # largest batch a policy server runs (null = the runtime's default)
+    max_wait_ms: null           # how long it waits to fill a batch (null = the runtime's default)
+    engine: builtin
+    routing: modulo
+  parts:                        # per-part override of placement.policy (mode auto follows it)
+    base:                       # the frozen base model of DSRL, RFS and SAC-edit; mode=served serves it
+      mode: auto                #   alone (shared by every rollout worker) while the actor stays local
+      replicas: null
+      gpus: null
+      gpus_per_replica: 1
+      max_batch: null
+      max_wait_ms: null
+      engine: builtin
+      routing: modulo
+    actor:
+      mode: auto
+  learner:
+    ranks: 1                    # data-parallel learner processes (FSDP ranks under runtime=rlinf or a multi-process
+                                #   runtime=native); 0 = evaluate an on-policy checkpoint without a learner
+    gpus: null
+  nodes: null
+  gpus_per_node: null           # GPUs per node the planner assumes (null = the GPUs visible here)
+
+env:
+  env_name: "arena/drill_lift"
+  sparse_success_reward: true   # replace the env reward with a terminal-outcome signal
+  success_reward: 0.0           # failure-penalty scheme: 0 on success,
+  failure_reward: -1.0          #   -1 on a failure terminal (incl. step-cap timeout) -> the common
+  step_reward: 0.0              #   outcome carries signal, so Q propagates faster than +1-on-rare-success
+  use_full_state: false         # DINO-embed the image (no ground-truth state features)
+  use_init_states: true         # LIBERO: draw the initial scene from the benchmark's fixed
+                                #   init-state files; false = sample a fresh scene each reset
+  critic_image_size: null        # set (e.g. 64) to attach 'critic_image' for pixel critics
+  fixed_init_state_id: null      # pin every reset to one benchmark init state (single-scenario training)
+  image_keys: null                # cameras the learner embeds; null = the simulator entry's mapped image keys
+  # Client-side episode cap (the Arena server enforces none): by default the task's cap from the
+  # simulator group (simulator.max_episode_steps, a per-task map keyed by the env_name task or
+  # one number); set a number to override it.
+  max_episode_steps: ${rlpt.episode_cap:${oc.select:simulator.max_episode_steps,null},${env.env_name}}
+
+training:
+  num_envs: 1                   # environments the rollout workers host (the simulator entry places them)
+  num_rollouts: 40000           # env-step budget of the validated G1 Factory recipe (runs collapse
+                                # beyond ~45k; see simulators/g1_arena/README.md)
+  chunk_size: 40                # steering latents PER FLOW STEP, matching the full GR00T action
+                                # horizon (the peak-validated configuration; 8 = the weaker ablation
+                                # that tiles each latent across the horizon). Execution chunking is
+                                # separate (dsrl.action_exec_len, handled by the rollout workers).
+  use_rnn: false
+  seed: 0
+  load_dir: null
+  save_interval: 5000           # aligned with eval_freq so a saved checkpoint is an evaluated one
+  checkpoint_retention: all     # 'best_last_final' prunes saves to the best-eval, last, and final
+  rollout_count_by: step        # count the rollout budget in env steps ('episode' counts episodes)
+  train_after_episode: true     # one training burst per completed episode (DSRL paper setting)
+  max_updates_per_burst: null   # cap updates per training phase; null = one update per decision (reference recipe)
+  policy_decode_batch_size: 16  # training-only GR00T microbatch cap; evaluation decodes all active envs together
+
+learner:
+  device: auto                  # device of a one-rank on-policy learner: auto | cpu | gpu
+
+buffer:
+  capacity: 200000              # transitions kept; the oldest complete episodes are evicted whole
+  reward_aggregation: last      # a decision's training reward: its outcome step ('last') or the sum of its steps
+  success_fraction: null        # e.g. 0.5 = half of every batch from successful episodes (null = uniform)
+  demonstrations: null          # a saved replay buffer directory mixed into every batch as demonstrations
+  demonstration_fraction: null  # share of every batch drawn from the demonstrations
+  save_buffer_on_exit: false    # write the replay buffer to disk when the run ends or is killed
+  save_buffer_every: 0          # also write it every N environment steps (0 = never)
+
+# Collected data kept besides training on it, for every algorithm and runtime. persist.path saves each
+# completed training episode as it arrives (evaluation episodes are not saved), in the saved replay-buffer
+# format: reload with load_buffer(path), summarize with `python -m isaac_rl_posttraining.data.inspect <path>`.
+data:
+  persist:
+    path: null                  # directory (relative = under the run directory); null = off
+    every_episodes: 100         # completed episodes per part-NNNNN folder
+    keep_frames: false          # keep camera frames (uint8 images), which dominate the size on disk
+
+logging:
+  wandb_project: isaac_rl_posttraining
+  wandb_entity: null
+  wandb_offline: false
+  wandb_prefix: dsrl
+  wandb_name: dsrl
+  wandb_log_dir_base: null            # W&B files go to <this>/<wandb_name>; null: WANDB_DIR, else logs/wandb
+  log_level: "INFO"
+
+eval:
+  eval_freq: 5000
+  eval_num_episodes: 50
+  eval_num_envs: 1              # >1 evaluates in parallel; eval_num_episodes must be an exact multiple
+  eval_record_video: true
+  eval_at_episode_boundary: true
+  eval_on_first_step: true
+  eval_base: false              # true = evaluate the NATIVE base policy (no steering latents)
+  action_selection: sample      # sample | mean; the steering policy is stochastic by design, sampling is faithful
+  eval_deterministic: false     # deprecated alias of action_selection (true = mean)
+  eval_max_steps: 1000          # hard per-episode cap so a wedged sim cannot hang evaluation
+  reset_seed: null              # seed evaluation resets per environment and episode (null = unseeded)
+  video_fps: 20
+
+model:
+  dinov2_model: "facebook/dinov2-base"   # frozen actor/critic image encoder
+  sentence_model: null
+  image_encoder_type: null               # 'small' | 'impala': trainable pixel encoders instead
+  small_bottleneck_dim: 50               # 'small' encoder head width
+  featurizer_dim: null                   # per-key MLP featurizer width (null = 384)
+  impala_use_smaller: false              # reduced-depth IMPALA variant
+  impala_bounded_head: false             # LayerNorm+tanh bound on the IMPALA embedding
+
+dsrl:
+  # Checkpoints, datasets, and embodiment selection live in the base model
+  # config group (base_model.ckpt, base_model.dataset_dir, ...).
+  action_exec_len: 8                     # execute the first 8 of each decoded chunk (receding horizon)
+  noise_dim: 35                          # per-step steering-latent width
+  noise_action_bound: 1.0                # SAC latent bounds [-1, 1] — the peak-validated
+                                         # "tight" recipe; wider bounds over-steer the frozen
+                                         # policy (early peak, then degradation)
+  warmup_exploration: uniform            # pre-learning_starts latents: 'uniform' (action box)
+                                         # or 'normal' (N(0,1), the flow's native noise)
+  use_vlm_features: false                # the critic uses the DINO embedding (decoupled from the base model)
+  batched_actor: false                   # a served policy runs the actor once per batch, not per session
+
+rfs:
+  # Residual Flow Steering: used only with algorithm=rfs.
+  # A raw additive correction in the decoded action units.
+  residual_action_bound: 0.01
+  initial_residual_log_std: -5.0
+  residual_exploration_std: 0.0
+  proposal_conditioned_residual: false
+  reference_action_conditioning: false
+  reference_action_key: reference_action
+
+direct_action:
+  # Direct-action geometry: used only with algorithm=sac_edit.
+  # The frozen policy decodes a reference action; the actor emits a bounded edit.
+  action_horizon: null                   # null = the frozen policy's decoded chunk length
+  action_dim: null                       # null = the frozen policy's action width (35 for G1)
+  action_bound: 1.0
+  action_indices: null
+  environment_action_defaults: null
+  include_sim_state: false
+  state_key: state
+  reference_action_transform: identity
+  relative_action_scale: 0.025
+  reference_image_transform_mode: eval   # frozen-policy image preprocessing during collection (train | eval)
+  simnorm_dim: 64
+  simnorm_groups: 8
+  actor_edit_scale: 0.02                 # edit bound in normalized action units (null = unbounded pre-tanh edit)
+  actor_reference_centered_full_support: false

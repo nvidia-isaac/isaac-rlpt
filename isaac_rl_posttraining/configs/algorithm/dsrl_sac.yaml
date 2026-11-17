@@ -1,0 +1,53 @@
+# DSRL SAC hyperparameters (arXiv:2603.02115 v2, Appendix A5, Table XXII "Automatic Online RL").
+
+defaults:
+  - base_dsrl_sac
+  - _self_
+
+name: dsrl_sac
+learning_starts: 1200
+ent_coef: "auto"               # auto-tuned temperature (ent_coef_lr below)
+ent_coef_parameterization: log # 'softplus' decays alpha gently from 1 (pair with temperature_loss_type=alpha)
+target_entropy: 0.0
+target_update_interval: 1
+gamma: 0.995                   # chunk-discounted at setup: gamma^action_exec_len
+tau: 0.005
+batch_size: 64
+
+num_critics: 4
+n_critics_to_sample: 2         # ensemble members sampled per TD target
+td_target_clip: null           # optional bounds on the complete Bellman target
+critic_target_reduction: mean  # 'mean' + pooled features is the validated recipe: retained
+                               # checkpoints re-scored above base at N=100 on both seeds
+                               # (G1 Factory DrillPnP 0.82/0.87 vs base 0.76); 'min' = REDQ
+                               # subset pessimism, kept as an ablation knob
+num_critic_updates_per_actor_update: 4
+critic_reduction: "min"        # min over members in the actor objective (curbs overestimation)
+num_updates_per_train_step: 10
+augment_pixels: false          # DrQ-style random-shift on image obs keys in update batches
+augment_color_jitter: false    # + brightness/contrast/saturation/hue jitter (reference aug)
+temperature_loss_type: log_alpha  # 'alpha' = reference-DSRL parameterization (slow re-inflation)
+actor_clip_grad_norm: null     # per-network grad clips; each falls back to clip_grad_norm
+critic_clip_grad_norm: null
+bootstrap_at_truncation: false # legacy: a time-limit cut is a terminal ("succeed within the
+                               # cap"); true = standard bootstrap-through-truncation (the
+                               # DSRL-pi0 reference convention)
+
+pooled_critic_features: true   # shared critic backbone across ensemble members (see critic_target_reduction)
+train_critic_with_entropy: false
+train_actor_with_entropy: true
+train_actor_with_kl_divergence: false
+
+actor_optimizer_lr: 5e-5
+actor_optimizer_eps: 1.0e-8
+actor_optimizer_weight_decay: 1.0e-6
+
+critic_optimizer_lr: 1e-4
+actor_optimizer_betas: [0.9, 0.999]
+critic_optimizer_betas: [0.95, 0.999]
+critic_optimizer_eps: 1.0e-8
+critic_optimizer_weight_decay: 1.0e-6
+
+ent_coef_lr: 1e-4
+latent_prior_kl_coef: 0.0      # weight of a KL(actor || N(0,1)) anchor on the steering latent
+train_actor_with_prior_kl: false  # replace max-ent with ent_coef*KL(actor||N(0,1)); mutually exclusive with latent_prior_kl_coef

@@ -1,0 +1,208 @@
+# The Isaac Lab workflow's own environment: Isaac Sim 6.2, Isaac Lab 3.0 (editable, so that
+# `uv run isaaclab train/play` finds its scripts), GR00T N1.5 and this repository.
+# It is separate from the repository's root environment because GR00T N1.5 needs transformers
+# 4.51.3 and Isaac Sim 6.2 needs torch 2.11, which the root environment cannot hold.
+#   bash scripts/fetch_externals.sh && uv sync
+[project]
+name = "isaaclab-gr00t-posttraining"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "isaac-rl-posttraining",
+    "isaacsim[all,extscache]==6.2.0.0",
+    # Isaac Lab's own development set (.externals/IsaacLab/pyproject.toml, `isaaclab-dev`), without its
+    # Newton extras: this workflow simulates with PhysX, and they pin newton 1.2.1 against Isaac Sim's 1.2.0.
+    "isaaclab",
+    "isaaclab-assets",
+    "isaaclab-contrib",
+    "isaaclab-experimental",
+    "isaaclab-newton",
+    "isaaclab-ov",
+    "isaaclab-physx",
+    "isaaclab-ppisp",
+    "isaaclab-rl",
+    "isaaclab-tasks",
+    "isaaclab-tasks-experimental",
+    "isaaclab-visualizers",
+    # Isaac Lab's Franka stack tasks import it, though the workflow drives no teleoperation device.
+    "isaaclab-teleop",
+    "gr00t",
+    "pytorch3d",
+    # Isaac Lab 3.0.0 declares its third-party requirements in its root pyproject.toml (`dependencies`),
+    # not in its packages; these are that list without the workspace members, torch and transformers.
+    "numpy>=2",
+    "onnx>=1.18.0",
+    "prettytable>=3.3.0",
+    "psutil",
+    "protobuf>=4.25.8,!=5.26.0",
+    "hidapi>=0.14.0",
+    "gymnasium>=1.2.0",
+    "trimesh>=4.6.8",
+    "pyglet>=2.1.6,<3",
+    "einops",
+    "warp-lang==1.17.0",
+    "matplotlib>=3.10.3",
+    "pillow>=12.3.0",
+    "botocore",
+    "starlette>=1.3.1",
+    "omniverseclient==2.74.0",
+    "filelock",
+    "lazy_loader>=0.4",
+    "Jinja2",
+    "pin ; platform_system == 'Linux'",
+    "pin-pink==3.3.0 ; platform_system == 'Linux'",
+    "daqp==0.8.5 ; platform_system == 'Linux'",
+    "usd-exchange==3.0.1",
+    "hf-xet>=1.4.1,<2.0.0",
+    "tensorboard",
+    "numba>=0.63.1",
+    "hydra-core",
+    "h5py>=3.15.0",
+    "packaging",
+    "rich",
+    "tqdm>=4.67.1",
+    "rsl-rl-lib==5.5.1",
+    "gitpython>=3.1.60",
+    "newton[sim]==1.6.1",
+    "requests>=2.25.0",
+    "urllib3>=2.8.0",
+    "scipy>=1.11.0",
+    "coacd>=1.0.7",
+    "fast-simplification>=0.1.11",
+    "alphashape>=1.3.1",
+    "meshio>=5.3.5",
+    "pycollada>=0.9",
+    "resolve-robotics-uri-py>=0.4.0",
+    "open3d>=0.19.0",
+    "newton-usd-schemas>=0.5.0",
+    "PyOpenGL-accelerate>=3.1.0",
+    "imgui-bundle>=1.92.5",
+    "typing-extensions>=4.15.0",
+    "PyJWT[crypto]>=2.15.1,<3",
+    # Direct dependencies, so [tool.uv.sources] routes them to the CUDA 12.8 index;
+    # Isaac Lab 3.0.0 pins torchvision 0.26.0, which needs torch 2.11.0.
+    "torch==2.11.0",
+    "torchvision==0.26.0",
+    "torchaudio==2.11.0",
+]
+
+[project.optional-dependencies]
+# RLInf runtime (`uv run isaaclab train ... --runtime rlinf`): the root project's rlinf extra.
+rlinf = ["isaac-rl-posttraining[rlinf]"]
+
+[tool.uv]
+package = false
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+# Isaac Lab is a beta and Isaac Sim pulls a release candidate (tinyobjloader).
+prerelease = "if-necessary-or-explicit"
+index-strategy = "first-index"
+python-preference = "only-managed"
+override-dependencies = [
+    # GR00T N1.5's pin; Isaac Lab (4.57.6) and this repository (>=4.57.3, for GR00T N1.7) ask for newer.
+    "transformers==4.51.3",
+    "tokenizers>=0.21,<0.22",
+    # The versions Isaac Sim pins, over Isaac Lab's source pins (as IsaacLab-Arena does).
+    "numpy==2.3.1",
+    "coverage==7.4.4",
+    "packaging==26.0",
+    # isaacteleop (via isaaclab-teleop) needs >=14 over isaacsim-kernel's ==12.0; Isaac Sim runs with it (IsaacLab-Arena's pin).
+    "websockets==16.1.1",
+    # Isaac Sim's pin; Ray 2.58 (rlinf extra) asks for >=3.14.1 but runs with it.
+    "aiohttp==3.12.14",
+    # Isaac Lab's own overrides (its root pyproject.toml).
+    "mujoco~=3.12.0",
+    "mujoco-warp~=3.12.0",
+    "newton-usd-schemas>=0.5.0",
+    "usd-exchange==3.0.1",
+    "usd-optimize~=1.3.1",
+    "fsspec>=2026.6.0",
+    "urllib3>=2.8.0",
+]
+# Transitive pins Isaac Lab 3.0 states too broadly; listing
+# mujoco-usd-converter here also lets [tool.uv.sources] route it to PyPI.
+constraint-dependencies = [
+    "pyglet<3",
+    "tinyobjloader==2.0.0rc13",
+    "mujoco-usd-converter==0.6.1",
+]
+
+# GR00T N1.5's own requirements pin Python 3.10-era packages (numpy<2, torch 2.5, ray 2.40);
+# install it with the runtime set Isaac Lab installs next to it instead (`decord` comes from this repository).
+[[tool.uv.dependency-metadata]]
+name = "gr00t"
+version = "1.1.0"
+requires-dist = [
+    "transformers==4.51.3",
+    "tokenizers>=0.21,<0.22",
+    "av>=12.3.0",
+    "pydantic>=2.7,<2.12",
+    "numpydantic",
+    "albumentations",
+    "dm-tree",
+    "diffusers",
+    "timm",
+    "peft",
+    "pandas",
+    "einops",
+    "loguru",
+    "rich",
+    "opencv-python-headless",
+    "tqdm",
+    "Pillow",
+]
+
+# RLInf 0.3.0 states a full training stack (torch, transformers, swanlab, vllm extras, ...) that
+# clashes with Isaac Sim 6.2 (wrapt, ...); the runtime adapter needs only these (as scripts/setup_runtime.sh).
+[[tool.uv.dependency-metadata]]
+name = "rlinf"
+version = "0.3.0"
+requires-dist = [
+    "ray[default]>=2.47.0",
+    "hydra-core",
+    "scipy",
+    "einops",
+    "debugpy",
+    "nvitop",
+    "icmplib",
+    "huggingface_hub",
+    "tensorboard",
+    "sortedcontainers",
+]
+
+[[tool.uv.index]]
+url = "https://pypi.nvidia.com"
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+isaac-rl-posttraining = { path = "../..", editable = true }
+gr00t = { path = ".externals/Isaac-GR00T", editable = true }
+pytorch3d = { path = ".externals/pytorch3d" }
+# The NVIDIA index carries only incompatible prereleases of these two.
+mujoco-usd-converter = { index = "pypi" }
+omniverseclient = { index = "pypi" }
+isaacteleop = { index = "pypi" }
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+torchaudio = { index = "pytorch-cu128" }
+isaaclab = { path = ".externals/IsaacLab/source/isaaclab", editable = true }
+isaaclab-assets = { path = ".externals/IsaacLab/source/isaaclab_assets", editable = true }
+isaaclab-contrib = { path = ".externals/IsaacLab/source/isaaclab_contrib", editable = true }
+isaaclab-experimental = { path = ".externals/IsaacLab/source/isaaclab_experimental", editable = true }
+isaaclab-newton = { path = ".externals/IsaacLab/source/isaaclab_newton", editable = true }
+isaaclab-ov = { path = ".externals/IsaacLab/source/isaaclab_ov", editable = true }
+isaaclab-physx = { path = ".externals/IsaacLab/source/isaaclab_physx", editable = true }
+isaaclab-ppisp = { path = ".externals/IsaacLab/source/isaaclab_ppisp", editable = true }
+isaaclab-rl = { path = ".externals/IsaacLab/source/isaaclab_rl", editable = true }
+isaaclab-tasks = { path = ".externals/IsaacLab/source/isaaclab_tasks", editable = true }
+isaaclab-tasks-experimental = { path = ".externals/IsaacLab/source/isaaclab_tasks_experimental", editable = true }
+isaaclab-visualizers = { path = ".externals/IsaacLab/source/isaaclab_visualizers", editable = true }
+isaaclab-teleop = { path = ".externals/IsaacLab/source/isaaclab_teleop", editable = true }
