@@ -1,0 +1,134 @@
+{
+  "figure": "the design of Fig. 7 of the paper (scripts/make_training_curves.py) over the full training horizon; this file is written by scripts/export_web_curves.py",
+  "sources": {
+    "pi0 and Diffusion Policy": "curves.csv of the pi0 / Robomimic run record, every in-training evaluation of every seed",
+    "pi0.5": "pi05_curves.csv, pulled from W&B by scripts/pull_pi05_curves.py"
+  },
+  "x_axis": "gradient updates for pi0; environment steps for pi0.5 and Diffusion Policy; each method runs to the last step all five of its seeds recorded, and the panel spans the longest method",
+  "smoothing": "pi0 and pi0.5: trailing mean over five evaluations (10- and 16-episode evaluations); Diffusion Policy: raw 200-episode evaluations",
+  "alignment": "step-hold of each seed on the task grid: the latest evaluation at or before each grid step; no extrapolation",
+  "band": "one sample standard deviation across the five training seeds, around their mean",
+  "base_policy": "success of the frozen base policy, the dotted level of the figure",
+  "horizons": {
+    "pi0:cream-cheese": {
+      "x_max": 500000,
+      "grid": 10000,
+      "smoothing_window": 5,
+      "last_step_per_method": {
+        "DSRL": 500000,
+        "LP-DS": 500000,
+        "LoRN": 500000
+      }
+    },
+    "pi0:moka-pot": {
+      "x_max": 500000,
+      "grid": 10000,
+      "smoothing_window": 5,
+      "last_step_per_method": {
+        "DSRL": 500000,
+        "LP-DS": 500000,
+        "LoRN": 500000
+      }
+    },
+    "pi0:cheese-box": {
+      "x_max": 500000,
+      "grid": 10000,
+      "smoothing_window": 5,
+      "last_step_per_method": {
+        "DSRL": 500000,
+        "LP-DS": 500000,
+        "LoRN": 500000
+      }
+    },
+    "pi0:black-bowl": {
+      "x_max": 500000,
+      "grid": 10000,
+      "smoothing_window": 5,
+      "last_step_per_method": {
+        "DSRL": 500000,
+        "LP-DS": 500000,
+        "LoRN": 500000
+      }
+    },
+    "pi0:alphabet-soup": {
+      "x_max": 500000,
+      "grid": 10000,
+      "smoothing_window": 5,
+      "last_step_per_method": {
+        "DSRL": 500000,
+        "LP-DS": 500000,
+        "LoRN": 500000
+      }
+    },
+    "pi0:butter": {
+      "x_max": 500000,
+      "grid": 10000,
+      "smoothing_window": 5,
+      "last_step_per_method": {
+        "DSRL": 500000,
+        "LP-DS": 500000,
+        "LoRN": 500000
+      }
+    },
+    "pi0:aloha-transfer": {
+      "x_max": 3000000,
+      "grid": 10000,
+      "smoothing_window": 5,
+      "last_step_per_method": {
+        "DSRL": 3000000,
+        "LP-DS": 3000000,
+        "LoRN": 3000000
+      }
+    },
+    "pi0.5:load-dishwasher": {
+      "x_max": 1000038,
+      "grid": 20000,
+      "smoothing_window": 5,
+      "last_step_per_method": {
+        "DSRL": 1000000,
+        "LP-DS": 1000000,
+        "LoRN": 1000000
+      }
+    },
+    "pi0.5:pack-container": {
+      "x_max": 1000050,
+      "grid": 20000,
+      "smoothing_window": 5,
+      "last_step_per_method": {
+        "DSRL": 1000000,
+        "LP-DS": 1000000,
+        "LoRN": 1000000
+      }
+    },
+    "DP:lift": {
+      "x_max": 1158004,
+      "grid": 50000,
+      "smoothing_window": 1,
+      "last_step_per_method": {
+        "DSRL": 1150000,
+        "LP-DS": 1100000,
+        "LoRN": 1100000
+      }
+    },
+    "DP:can": {
+      "x_max": 1542004,
+      "grid": 50000,
+      "smoothing_window": 1,
+      "last_step_per_method": {
+        "DSRL": 1500000,
+        "LP-DS": 1500000,
+        "LoRN": 1450000
+      }
+    },
+    "DP:square": {
+      "x_max": 3592004,
+      "grid": 50000,
+      "smoothing_window": 1,
+      "last_step_per_method": {
+        "DSRL": 3550000,
+        "LP-DS": 3450000,
+        "LoRN": 3550000
+      }
+    }
+  }
+}
